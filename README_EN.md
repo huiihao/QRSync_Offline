@@ -33,6 +33,8 @@
 
 > Download the repository archive. Once the page finishes loading JavaScript, you can disconnect from the network and use it offline.
 
+<img width="80%" alt="image" src="https://github.com/user-attachments/assets/af93481a-316c-4246-9631-1dfd7c282899" />
+
 ---
 
 ## ✨ Features
@@ -60,9 +62,9 @@
 4. Click the "Generate QR Codes" button
 5. Display QR codes in sequence for the receiver to scan
 
-**Sender Interface:**
+**📤Sender Interface:**
 
-📤
+<img width="70%" alt="image" src="https://github.com/user-attachments/assets/b2fe4202-e958-41d4-9720-6c30c2fd4970" />
 
 ### Receiving Files
 
@@ -73,9 +75,12 @@
 5. Click the "Reassemble File" button
 6. Click "Download File" to save locally
 
-**Receiver Interface:**
+**📥Receiver Interface:**
 
-📥
+<div style="display: flex; justify-content: space-between; gap: 20px;">
+  <img style="width: 48%; height: auto;" alt="Sender Interface" src="https://github.com/user-attachments/assets/903f79b1-7804-42f5-b15f-6dfc86b2fe1f" />
+  <img style="width: 48%; height: auto;" alt="Receiver Interface" src="https://github.com/user-attachments/assets/5775618f-2c48-40c5-b99f-459b864a0c06" />
+</div>
 
 ---
 
