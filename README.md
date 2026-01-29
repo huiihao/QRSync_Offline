@@ -48,7 +48,7 @@
 
 ### 发送文件
 
-1. 打开 **[发送端](send/index.html)**
+1. 打开 **[发送端](https://github.com/huiihao/QRSync_Offline/send/index.html)**
 2. 点击或拖拽选择要传输的文件
 3. 调整分片大小和二维码尺寸（可选）
 4. 点击"生成二维码"按钮
@@ -60,7 +60,7 @@
 
 ### 接收文件
 
-1. 打开 **[接收端](receiver/index.html)**
+1. 打开 **[接收端](https://github.com/huiihao/QRSync_Offline/receiver/index.html)**
 2. 点击"开始扫描"按钮，允许摄像头权限
 3. 按顺序扫描所有数据二维码
 4. 最后扫描文件名二维码（橙色边框）
