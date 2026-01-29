@@ -32,7 +32,7 @@
 
 > 下载本仓库压缩包，页面加载JavaScript完成后，即可断开网络离线使用。
 
-<img width="2001" height="1161" alt="image" src="https://github.com/user-attachments/assets/af93481a-316c-4246-9631-1dfd7c282899" />
+<img width="80%" alt="image" src="https://github.com/user-attachments/assets/af93481a-316c-4246-9631-1dfd7c282899" />
 
 ---
 
@@ -62,7 +62,8 @@
 5. 按顺序展示二维码供接收端扫描
 
 **发送端界面：**
-<img width="2001" height="1355" alt="image" src="https://github.com/user-attachments/assets/b2fe4202-e958-41d4-9720-6c30c2fd4970" />
+
+<img width="70%" alt="image" src="https://github.com/user-attachments/assets/b2fe4202-e958-41d4-9720-6c30c2fd4970" />
 
 
 ### 接收文件
@@ -76,7 +77,10 @@
 
 **接收端界面：**
 
-📥
+<div style="display: flex; justify-content: space-between; gap: 20px;">
+  <img style="width: 48%; height: auto;" alt="Sender Interface" src="https://github.com/user-attachments/assets/903f79b1-7804-42f5-b15f-6dfc86b2fe1f" />
+  <img style="width: 48%; height: auto;" alt="Receiver Interface" src="https://github.com/user-attachments/assets/5775618f-2c48-40c5-b99f-459b864a0c06" />
+</div>
 
 ---
 
