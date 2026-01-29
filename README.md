@@ -32,6 +32,8 @@
 
 > 下载本仓库压缩包，页面加载JavaScript完成后，即可断开网络离线使用。
 
+<img width="2001" height="1161" alt="image" src="https://github.com/user-attachments/assets/af93481a-316c-4246-9631-1dfd7c282899" />
+
 ---
 
 ## ✨ 功能特点
@@ -60,8 +62,8 @@
 5. 按顺序展示二维码供接收端扫描
 
 **发送端界面：**
+<img width="2001" height="1355" alt="image" src="https://github.com/user-attachments/assets/b2fe4202-e958-41d4-9720-6c30c2fd4970" />
 
-📤
 
 ### 接收文件
 
