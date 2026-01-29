@@ -61,7 +61,7 @@
 4. 点击"生成二维码"按钮
 5. 按顺序展示二维码供接收端扫描
 
-**发送端界面：**
+**📤发送端界面：**
 
 <img width="70%" alt="image" src="https://github.com/user-attachments/assets/b2fe4202-e958-41d4-9720-6c30c2fd4970" />
 
@@ -75,7 +75,7 @@
 5. 点击"重组文件"按钮
 6. 点击"下载文件"保存到本地
 
-**接收端界面：**
+**📥接收端界面：**
 
 <div style="display: flex; justify-content: space-between; gap: 20px;">
   <img style="width: 48%; height: auto;" alt="Sender Interface" src="https://github.com/user-attachments/assets/903f79b1-7804-42f5-b15f-6dfc86b2fe1f" />
