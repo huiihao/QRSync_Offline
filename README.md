@@ -56,7 +56,7 @@
 
 **发送端界面：**
 
-![发送端界面](https://via.placeholder.com/800x500/f5f5f7/0071e3?text=Sender+Interface)
+📤
 
 ### 接收文件
 
@@ -69,7 +69,7 @@
 
 **接收端界面：**
 
-![接收端界面](https://via.placeholder.com/800x500/f5f5f7/0071e3?text=Receiver+Interface)
+📥
 
 ---
 
