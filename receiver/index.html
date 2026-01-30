@@ -779,12 +779,16 @@
                     formats: [ZXing.BarcodeFormat.QR_CODE]
                 });
                 
-                scanControls = await codeReader.decodeFromVideoDevice(
+                scanControls = codeReader.decodeFromVideoDevice(
                     deviceId || undefined,
-                    document.getElementById('video'),
-                    (result, error, controls) => {
+                    videoElement,
+                    (result, err) => {
                         if (result) {
                             handleScanResult(result.getText());
+                
+                            // 🔑 成功后立刻停止扫描，避免重复触发
+                            scanControls.stop();
+                            codeReader.reset();
                         }
                     }
                 );
