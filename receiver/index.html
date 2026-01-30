@@ -411,8 +411,8 @@
         }
         
         .image-scan-frame {
-            width: 100%;
-            height: 100%;
+            width: 70%;
+            height: 70%;
             border: 3px solid var(--accent);
             border-radius: 20px;
             position: relative;
@@ -516,7 +516,6 @@
         
         .action-buttons .btn { flex: 1; min-width: 140px; }
         
-        /* 危险区域 - 清除数据 */
         .danger-zone {
             margin-top: 30px;
             padding: 20px;
@@ -889,10 +888,8 @@
             }
             
             try {
-                // 停止扫描
                 if (isScanning) await stopCamera();
                 
-                // 清除内存中的数据
                 receivedChunks.clear();
                 fileInfo = null;
                 currentFileFingerprint = null;
@@ -900,11 +897,9 @@
                 imageQueue = [];
                 currentImageIndex = -1;
                 
-                // 清除本地存储
                 const store = localforage.createInstance({ name: 'qrcode-receiver-v2' });
                 await store.clear();
                 
-                // 重置UI
                 document.getElementById('fingerprint-display').style.display = 'none';
                 document.getElementById('fingerprint-value').textContent = '未设置';
                 document.getElementById('progress-fill').style.width = '0%';
@@ -916,7 +911,6 @@
                 document.getElementById('camera-status').textContent = '等待扫描第一个二维码...';
                 document.getElementById('camera-status').className = 'status-message status-info show';
                 
-                // 清除图片队列UI
                 document.getElementById('queue-section').style.display = 'none';
                 document.getElementById('preview-section').classList.remove('active');
                 document.getElementById('queue-list').innerHTML = '';
@@ -1193,7 +1187,7 @@
             document.getElementById('current-status').textContent = item.status === 'pending' ? '等待识别' : item.status === 'completed' ? '✓ 已识别' : '✗ 失败';
         }
         
-        // ==================== 修复：识别扫描框内100%区域 ====================
+        // ==================== 修复：识别扫描框内100%完整区域 + 橙色二维码优化 ====================
         async function scanCurrent() {
             if (currentImageIndex === -1) return;
             const item = imageQueue[currentImageIndex];
@@ -1206,27 +1200,26 @@
                 const width = canvas.width;
                 const height = canvas.height;
                 
-                // 计算扫描框区域（70%中心区域，与CSS .image-scan-frame 70%一致）
-                const scanAreaRatio = 1.00;
-                const startX = (width * (1 - scanAreaRatio)) / 2;
-                const startY = (height * (1 - scanAreaRatio)) / 2;
-                const scanWidth = width * scanAreaRatio;
-                const scanHeight = height * scanAreaRatio;
+                // 提取扫描框区域（70%中心区域）的100%完整像素
+                const scanAreaRatio = 0.70;
+                const startX = Math.floor((width * (1 - scanAreaRatio)) / 2);
+                const startY = Math.floor((height * (1 - scanAreaRatio)) / 2);
+                const scanWidth = Math.floor(width * scanAreaRatio);
+                const scanHeight = Math.floor(height * scanAreaRatio);
                 
-                // 提取扫描框区域的完整图像数据（100%区域，不裁剪）
+                // 获取扫描框区域的完整图像数据（100%内容）
                 const imageData = ctx.getImageData(startX, startY, scanWidth, scanHeight);
                 
-                // 创建临时canvas用于ZXing/jsQR识别
+                // 创建临时canvas用于识别
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = scanWidth;
                 tempCanvas.height = scanHeight;
                 const tempCtx = tempCanvas.getContext('2d');
                 tempCtx.putImageData(imageData, 0, 0);
                 
-                // 尝试多种识别方式
                 let result = null;
                 
-                // 1. 使用ZXing识别（如果可用）
+                // 1. 使用ZXing识别原始图像（如果可用）
                 if (typeof ZXing !== 'undefined') {
                     try {
                         const reader = new ZXing.BrowserQRCodeReader();
@@ -1235,16 +1228,25 @@
                     } catch (e) { /* 失败继续 */ }
                 }
                 
-                // 2. 使用jsQR识别扫描框区域
+                // 2. 使用jsQR识别原始扫描框区域
                 if (!result) {
                     const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
                     if (code) result = code.data;
                 }
                 
-                // 3. 如果仍未识别，尝试对扫描框区域进行预处理后识别
+                // 3. 针对橙色二维码优化：使用低阈值二值化（阈值200）
+                // 橙色(255,165,0)的灰度约173，标准阈值128会将其视为白色
+                // 使用阈值200可将橙色正确识别为黑色（暗部）
                 if (!result) {
-                    const processedData = preprocessImageData(imageData);
-                    const code = jsQR(processedData.data, processedData.width, processedData.height, { inversionAttempts: "attemptBoth" });
+                    const orangeOptimizedData = preprocessImageDataWithThreshold(imageData, 200);
+                    const code = jsQR(orangeOptimizedData.data, orangeOptimizedData.width, orangeOptimizedData.height, { inversionAttempts: "attemptBoth" });
+                    if (code) result = code.data;
+                }
+                
+                // 4. 针对极难识别的二维码：尝试反转颜色模式
+                if (!result) {
+                    const invertedData = invertImageData(imageData);
+                    const code = jsQR(invertedData.data, invertedData.width, invertedData.height, { inversionAttempts: "attemptBoth" });
                     if (code) result = code.data;
                 }
                 
@@ -1254,7 +1256,7 @@
                     setTimeout(() => { if (currentImageIndex < imageQueue.length - 1) selectImage(currentImageIndex + 1); }, 500);
                 } else {
                     item.status = 'error';
-                    showToast('未在扫描框区域识别到二维码');
+                    showToast('未在扫描框区域内识别到二维码');
                 }
             } catch (err) {
                 console.error('识别错误:', err);
@@ -1268,14 +1270,29 @@
             displayImage(item);
         }
         
-        // 图像预处理（灰度+二值化）
-        function preprocessImageData(imageData) {
+        // 使用指定阈值进行二值化（专门用于识别橙色二维码）
+        function preprocessImageDataWithThreshold(imageData, threshold) {
             const data = new Uint8ClampedArray(imageData.data);
             const len = data.length;
             for (let i = 0; i < len; i += 4) {
+                // 计算灰度值
                 const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-                const val = gray > 128 ? 255 : 0;
+                // 使用指定阈值二值化（橙色173在阈值200下会被视为黑色0）
+                const val = gray > threshold ? 255 : 0;
                 data[i] = data[i + 1] = data[i + 2] = val;
+            }
+            return new ImageData(data, imageData.width, imageData.height);
+        }
+        
+        // 颜色反转（用于处理反色二维码）
+        function invertImageData(imageData) {
+            const data = new Uint8ClampedArray(imageData.data);
+            const len = data.length;
+            for (let i = 0; i < len; i += 4) {
+                data[i] = 255 - data[i];         // R
+                data[i + 1] = 255 - data[i + 1]; // G
+                data[i + 2] = 255 - data[i + 2]; // B
+                // Alpha不变
             }
             return new ImageData(data, imageData.width, imageData.height);
         }
