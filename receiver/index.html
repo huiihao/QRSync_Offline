@@ -149,9 +149,8 @@
             display: block;
         }
         
-        /* Mobile Camera - Fixed Layout like reference */
-        .camera-section-mobile {
-            position: relative;
+        /* ==================== 相机扫描部分（整合自第二份代码） ==================== */
+        .camera-controls {
             margin-bottom: 20px;
         }
         
@@ -162,7 +161,7 @@
             flex-wrap: wrap;
         }
         
-        .camera-select-row select {
+        #camera-select {
             flex: 1;
             min-width: 200px;
             padding: 12px;
@@ -176,26 +175,29 @@
             background-repeat: no-repeat;
             background-position: right 12px center;
             padding-right: 36px;
+            color: var(--text-primary);
         }
         
-        /* Scan Window - Mobile Optimized like reference */
-        /* 手机端：保持全宽 */
+        /* 扫描窗口样式 */
+        .scan-section-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+            border-radius: 20px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .scan-section-wrapper.active {
+            display: block;
+        }
+        
         .scan-window {
             width: 100%;
             background: #000;
             position: relative;
             padding-top: 100%;
-            border-radius: 16px;
+            border-radius: 20px;
             overflow: hidden;
-            margin: 0 auto 16px;
-        }
-        
-        /* 电脑端：限制大小 */
-        @media (min-width: 768px) {
-            .scan-window {
-                max-width: 360px;      /* 可调整：300px-400px之间 */
-                padding-top: 360px;    /* 保持正方形，与max-width相同 */
-            }
         }
         
         .video-container {
@@ -233,11 +235,24 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 90%;
-            height: 90%;
+            width: 70%;
+            height: 70%;
             border: 3px solid var(--accent);
             border-radius: 20px;
             box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            animation: scan-pulse 2s infinite;
+        }
+        
+        @keyframes scan-pulse {
+            0% { border-color: var(--accent); }
+            50% { border-color: var(--success); }
+            100% { border-color: var(--accent); }
+        }
+        
+        .scan-success .scan-frame {
+            border-color: var(--success) !important;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 20px rgba(52, 199, 89, 0.5) !important;
+            animation: none !important;
         }
         
         .corner {
@@ -253,15 +268,109 @@
         .corner.bl { bottom: -3px; left: -3px; border-width: 0 0 4px 4px; }
         .corner.br { bottom: -3px; right: -3px; border-width: 0 4px 4px 0; }
         
+        /* 关闭扫描按钮 */
+        .scan-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 59, 48, 0.9);
+            border: 2px solid white;
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            pointer-events: auto;
+        }
+        
+        .scan-close-btn:hover {
+            background: rgba(192, 57, 43, 0.9);
+            transform: scale(1.1);
+        }
+        
         .scan-tips {
             background: rgba(0, 113, 227, 0.9);
             color: white;
             text-align: center;
             padding: 12px;
-            border-radius: 12px;
+            border-radius: 0 0 20px 20px;
             font-size: 14px;
-            margin-top: -10px;
-            margin-bottom: 20px;
+            margin-top: -20px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .scan-tips p {
+            margin: 3px 0;
+        }
+        
+        /* 浮动提示 */
+        .floating-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(52, 199, 89, 0.95);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            z-index: 2000;
+            box-shadow: 0 10px 30px rgba(52, 199, 89, 0.3);
+            animation: floatUp 1.5s ease forwards;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 80%;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            pointer-events: none;
+        }
+        
+        .floating-error {
+            background: rgba(255, 59, 48, 0.95);
+            box-shadow: 0 10px 30px rgba(255, 59, 48, 0.3);
+        }
+        
+        @keyframes floatUp {
+            0% { opacity: 0; transform: translate(-50%, -30%); }
+            20% { opacity: 1; transform: translate(-50%, -50%); }
+            80% { opacity: 1; transform: translate(-50%, -50%); }
+            100% { opacity: 0; transform: translate(-50%, -70%); }
+        }
+        
+        /* 手动输入区域 */
+        .manual-input-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .manual-input-section p {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        #manual-data {
+            width: 100%;
+            height: 100px;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.1);
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-bottom: 12px;
+            resize: vertical;
+            background: rgba(0,0,0,0.02);
+            color: var(--text-primary);
         }
         
         /* Error Panel */
@@ -349,7 +458,6 @@
             overflow: hidden;
             position: relative;
             margin-bottom: 20px;
-            /* Dynamic aspect ratio set by JS */
         }
         
         #preview-canvas {
