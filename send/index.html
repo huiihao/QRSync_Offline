@@ -6,6 +6,9 @@
     <title>QRSyncOffline - 发送端</title>
     <script src="js/pako.min.js"></script>
     <script src="js/qrcode.min.js"></script>
+    <!-- 添加 JSZip 和 FileSaver 用于批量下载 -->
+    <script src="js/jszip.min.js"></script>
+    <script src="jd/FileSaver.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -248,6 +251,9 @@
         /* Slider */
         .slider-container {
             margin-bottom: 28px;
+            background: rgba(0,0,0,0.02);
+            padding: 20px;
+            border-radius: 16px;
         }
         
         .slider-header {
@@ -267,6 +273,9 @@
             color: var(--accent);
             font-weight: 600;
             font-family: "SF Mono", monospace;
+            background: rgba(0,113,227,0.1);
+            padding: 4px 12px;
+            border-radius: 980px;
         }
         
         input[type="range"] {
@@ -276,6 +285,7 @@
             background: rgba(0, 0, 0, 0.08);
             outline: none;
             -webkit-appearance: none;
+            cursor: pointer;
         }
         
         input[type="range"]::-webkit-slider-thumb {
@@ -287,6 +297,7 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             cursor: pointer;
             transition: transform 0.2s;
+            border: 2px solid var(--accent);
         }
         
         input[type="range"]::-webkit-slider-thumb:hover {
@@ -299,6 +310,19 @@
             margin-top: 8px;
             font-size: 13px;
             color: var(--text-secondary);
+        }
+        
+        /* 滑块变更提示 */
+        .slider-hint {
+            font-size: 13px;
+            color: var(--warning);
+            margin-top: 8px;
+            display: none;
+            text-align: center;
+        }
+        
+        .slider-hint.show {
+            display: block;
         }
         
         /* Progress */
@@ -344,6 +368,7 @@
         .btn-group {
             display: flex;
             gap: 16px;
+            flex-wrap: wrap;
             justify-content: center;
         }
         
@@ -358,7 +383,10 @@
             letter-spacing: -0.022em;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
+            flex: 1;
+            min-width: 200px;
         }
         
         .btn-primary {
@@ -381,8 +409,18 @@
             color: var(--text-primary);
         }
         
-        .btn-secondary:hover {
+        .btn-secondary:hover:not(:disabled) {
             background: rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            background: #30b350;
+            transform: scale(1.02);
         }
         
         /* Status */
@@ -462,6 +500,7 @@
             background: white;
             border-radius: 24px;
             box-shadow: var(--shadow);
+            transition: all 0.3s ease;
         }
         
         .qr-container.data-qr {
@@ -470,6 +509,13 @@
         
         .qr-container.filename-qr {
             border: 3px solid var(--warning);
+        }
+        
+        /* QR尺寸实时预览适应 */
+        #qrcode img, #qrcode canvas {
+            max-width: 100%;
+            height: auto;
+            display: block;
         }
         
         .qr-info {
@@ -509,6 +555,25 @@
             color: var(--text-secondary);
         }
         
+        /* Download section */
+        .download-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            display: none;
+        }
+        
+        .download-section.show {
+            display: block;
+        }
+        
+        .download-info {
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
         /* Chunks Grid */
         .chunks-grid {
             display: flex;
@@ -516,6 +581,11 @@
             gap: 8px;
             justify-content: center;
             margin-top: 32px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(0,0,0,0.02);
+            border-radius: 16px;
         }
         
         .chunk-dot {
@@ -530,6 +600,7 @@
             cursor: pointer;
             transition: all 0.3s;
             font-family: "SF Mono", monospace;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         
         .chunk-dot.pending {
@@ -540,11 +611,17 @@
         .chunk-dot.generated {
             background: var(--accent);
             color: white;
+            transform: scale(1.05);
         }
         
         .chunk-dot.filename {
             background: var(--warning);
             color: white;
+        }
+        
+        .chunk-dot:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
         /* Toggle */
@@ -656,13 +733,13 @@
                 padding: 24px;
             }
             
-            .btn-group {
-                flex-direction: column;
-            }
-            
             .btn {
                 width: 100%;
-                justify-content: center;
+                min-width: unset;
+            }
+            
+            .qr-container {
+                padding: 20px;
             }
         }
     </style>
@@ -723,7 +800,7 @@
                 传输设置
             </div>
             
-            <div class="slider-container">
+            <div class="slider-container" id="chunkSizeContainer">
                 <div class="slider-header">
                     <span class="slider-label">分片大小</span>
                     <span class="slider-value" id="chunkSizeValue">800 B</span>
@@ -734,9 +811,10 @@
                     <span>800B</span>
                     <span>1500B</span>
                 </div>
+                <div class="slider-hint" id="chunkSizeHint">⚠️ 更改此设置需要重新生成二维码</div>
             </div>
             
-            <div class="slider-container">
+            <div class="slider-container" id="qrSizeContainer">
                 <div class="slider-header">
                     <span class="slider-label">二维码尺寸</span>
                     <span class="slider-value" id="qrSizeValue">400 px</span>
@@ -747,6 +825,7 @@
                     <span>400px</span>
                     <span>600px</span>
                 </div>
+                <div class="slider-hint" id="qrSizeHint">⚠️ 更改此设置需要重新点击"生成二维码"</div>
             </div>
             
             <div class="progress-section">
@@ -812,11 +891,26 @@
                 </div>
             </div>
             
+            <!-- 批量下载区域 -->
+            <div class="download-section" id="downloadSection">
+                <div class="download-info">
+                    共生成 <span id="totalQrCount">0</span> 个二维码（包含 <span id="dataQrCount">0</span> 个数据分片 + 1 个文件名分片）
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" id="downloadAllBtn">
+                        <span>⬇️ 下载全部 (ZIP)</span>
+                    </button>
+                    <button class="btn btn-secondary" id="downloadCurrentBtn">
+                        <span>💾 下载当前</span>
+                    </button>
+                </div>
+            </div>
+            
             <div class="chunks-grid" id="chunksGrid"></div>
         </div>
     </div>
     
-    <div class="toast" id="toast"></div>
+    <div class="toast" id="toast">已复制到剪贴板</div>
 
     <script>
         // ==================== 配置和常量 ====================
@@ -843,6 +937,7 @@
         let fileNameQrCode = null;
         let autoplayInterval = null;
         let isPlaying = false;
+        let hasGenerated = false; // 标记是否已生成过二维码
 
         // ==================== DOM 元素 ====================
         const uploadArea = document.getElementById('uploadArea');
@@ -855,6 +950,7 @@
         const qrContainer = document.getElementById('qrContainer');
         const chunksGrid = document.getElementById('chunksGrid');
         const toast = document.getElementById('toast');
+        const downloadSection = document.getElementById('downloadSection');
 
         // ==================== 工具函数 ====================
         function generateShortFileId() {
@@ -929,12 +1025,12 @@
             });
         }
 
-        function showToast(message) {
+        function showToast(message, duration = 3000) {
             toast.textContent = message;
             toast.classList.add('show');
             setTimeout(() => {
                 toast.classList.remove('show');
-            }, 3000);
+            }, duration);
         }
 
         function showStatus(message, type = 'info') {
@@ -991,38 +1087,60 @@
             fileInfo.style.display = 'block';
             generateBtn.disabled = false;
             
+            // 重置生成状态
+            hasGenerated = false;
+            hideRegenerateHints();
+            
             updateChunkEstimation();
             showStatus('文件已选择，点击"生成二维码"开始', 'success');
             showToast('文件选择成功');
         }
 
-        // 滑块事件
+        // 滑块事件 - 分片大小（需要重新处理文件）
         const chunkSizeSlider = document.getElementById('chunkSizeSlider');
         const chunkSizeValue = document.getElementById('chunkSizeValue');
+        const chunkSizeHint = document.getElementById('chunkSizeHint');
         
         chunkSizeSlider.addEventListener('input', function() {
             CONFIG.CHUNK_SIZE = parseInt(this.value);
             chunkSizeValue.textContent = CONFIG.CHUNK_SIZE + ' B';
             updateChunkEstimation();
+            
+            if (hasGenerated) {
+                chunkSizeHint.classList.add('show');
+            }
         });
 
+        // 滑块事件 - QR尺寸（只需要重新生成，不需要重新处理文件）
         const qrSizeSlider = document.getElementById('qrSizeSlider');
         const qrSizeValue = document.getElementById('qrSizeValue');
+        const qrSizeHint = document.getElementById('qrSizeHint');
         
         qrSizeSlider.addEventListener('input', function() {
             CONFIG.QR_SIZE = parseInt(this.value);
             qrSizeValue.textContent = CONFIG.QR_SIZE + ' px';
+            
+            // 如果已经生成，提示需要重新生成才能看到效果
+            if (hasGenerated) {
+                qrSizeHint.classList.add('show');
+            }
         });
+
+        function hideRegenerateHints() {
+            chunkSizeHint.classList.remove('show');
+            qrSizeHint.classList.remove('show');
+        }
 
         function updateChunkEstimation() {
             if (!file) return;
             const estimatedCompressedSize = file.size * 0.6;
             const estimated = Math.ceil(estimatedCompressedSize / CONFIG.CHUNK_SIZE);
             document.getElementById('estimatedChunks').textContent = (estimated + 1) + ' 个';
-            document.getElementById('estimationBar').style.width = Math.min(estimated / 50 * 100, 100) + '%';
+            const percentage = Math.min(estimated / 100 * 100, 100); // 假设100个为满
+            document.getElementById('estimationBar').style.width = percentage + '%';
         }
 
-        // 生成二维码
+        // 生成二维码按钮
         generateBtn.addEventListener('click', async () => {
             if (!file) {
                 showStatus('请先选择文件', 'error');
@@ -1088,11 +1206,12 @@
                 if (jsonStr.length > CONFIG.QR_MAX_CAPACITY) {
                     const excessRatio = jsonStr.length / CONFIG.QR_MAX_CAPACITY;
                     const newChunkSize = Math.floor(CONFIG.CHUNK_SIZE / excessRatio * 0.8);
+                    const suggestedSize = Math.max(400, newChunkSize);
                     
-                    showStatus(`分片 ${i+1} 数据过大，请减小分片大小`, 'error');
-                    chunkSizeSlider.value = Math.max(400, newChunkSize);
-                    chunkSizeValue.textContent = Math.max(400, newChunkSize) + ' B';
-                    CONFIG.CHUNK_SIZE = Math.max(400, newChunkSize);
+                    showStatus(`分片 ${i+1} 数据过大，建议将分片大小调整为 ${suggestedSize} B`, 'error');
+                    chunkSizeSlider.value = suggestedSize;
+                    chunkSizeValue.textContent = suggestedSize + ' B';
+                    CONFIG.CHUNK_SIZE = suggestedSize;
                     
                     generateBtn.disabled = false;
                     generateBtn.innerHTML = '<span>生成二维码</span>';
@@ -1103,6 +1222,8 @@
                 
                 if (i % Math.max(1, Math.floor(totalChunks / 10)) === 0) {
                     showStatus(`分片进度: ${i+1}/${totalChunks}`, 'info');
+                    // 让UI有机会刷新
+                    await new Promise(resolve => setTimeout(resolve, 10));
                 }
             }
             
@@ -1111,6 +1232,9 @@
             showStatus(`处理完成！共 ${totalChunks} 个数据分片 + 1 个文件名分片`, 'success');
             
             await generateQRCodeSequence();
+            
+            hasGenerated = true;
+            hideRegenerateHints();
         }
 
         function createFileNameQrCode(totalChunks) {
@@ -1159,6 +1283,11 @@
                 index: chunks.length
             });
             
+            // 更新统计信息
+            document.getElementById('totalQrCount').textContent = totalQRCodes;
+            document.getElementById('dataQrCount').textContent = chunks.length;
+            downloadSection.classList.add('show');
+            
             renderChunksGrid();
             showQRCode(0);
             
@@ -1206,6 +1335,7 @@
             
             qrContainer.className = isFilenameQR ? 'qr-container filename-qr' : 'qr-container data-qr';
             
+            // 使用当前 CONFIG.QR_SIZE 确保尺寸设置生效
             new QRCode(document.getElementById('qrcode'), {
                 text: JSON.stringify(qrData.data),
                 width: CONFIG.QR_SIZE,
@@ -1225,10 +1355,14 @@
                 ? '⚠️ 请最后扫描此二维码' 
                 : '请使用手机接收端扫描此二维码';
             
+            // 更新网格高亮
             document.querySelectorAll('.chunk-dot').forEach((dot, i) => {
                 if (i === index) {
                     dot.classList.add('generated');
                     dot.classList.remove('pending');
+                } else if (i < chunks.length) {
+                    dot.classList.remove('generated');
+                    dot.classList.add('pending');
                 }
             });
         }
@@ -1247,6 +1381,117 @@
                 showQRCode(currentChunkIndex + 1);
             }
         });
+
+        // 下载当前二维码
+        document.getElementById('downloadCurrentBtn').addEventListener('click', downloadCurrentQR);
+
+        function downloadCurrentQR() {
+            const canvas = qrContainer.querySelector('canvas');
+            if (!canvas) {
+                showToast('没有可下载的二维码');
+                return;
+            }
+            
+            const link = document.createElement('a');
+            const isFilename = currentChunkIndex === qrCodes.length - 1;
+            const filename = isFilename 
+                ? `qrcode_${fileFingerprint}_filename.png` 
+                : `qrcode_${fileFingerprint}_${String(currentChunkIndex + 1).padStart(3, '0')}.png`;
+            
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            
+            showToast('已开始下载当前二维码');
+        }
+
+        // 批量下载所有二维码
+        document.getElementById('downloadAllBtn').addEventListener('click', downloadAllQRCodes);
+
+        async function downloadAllQRCodes() {
+            if (!qrCodes.length) return;
+            
+            if (typeof JSZip === 'undefined') {
+                showStatus('正在加载 ZIP 库，请稍候...', 'info');
+                // 动态加载 JSZip（如果 CDN 失败）
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            }
+            
+            const zip = new JSZip();
+            const folder = zip.folder(`qrcodes_${fileFingerprint}`);
+            
+            const btn = document.getElementById('downloadAllBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> 打包中...';
+            showStatus('正在打包所有二维码，请稍候...', 'info');
+            
+            try {
+                // 重新生成所有二维码以捕获图像（不显示在 DOM 中）
+                for (let i = 0; i < qrCodes.length; i++) {
+                    const qr = qrCodes[i];
+                    const isFilename = qr.type === CONFIG.PACKET_TYPES.FILENAME;
+                    
+                    // 创建临时容器
+                    const tempDiv = document.createElement('div');
+                    tempDiv.style.position = 'absolute';
+                    tempDiv.style.left = '-9999px';
+                    document.body.appendChild(tempDiv);
+                    
+                    new QRCode(tempDiv, {
+                        text: JSON.stringify(qr.data),
+                        width: CONFIG.QR_SIZE,
+                        height: CONFIG.QR_SIZE,
+                        colorDark: isFilename ? '#ff9500' : '#0071e3',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.L
+                    });
+                    
+                    // 等待生成完成
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    const canvas = tempDiv.querySelector('canvas');
+                    if (canvas) {
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                        const filename = isFilename 
+                            ? `qrcode_filename.png` 
+                            : `qrcode_data_${String(qr.data.i + 1).padStart(3, '0')}.png`;
+                        folder.file(filename, blob);
+                    }
+                    
+                    document.body.removeChild(tempDiv);
+                    
+                    // 更新进度
+                    if (i % 10 === 0 || i === qrCodes.length - 1) {
+                        showStatus(`打包进度: ${i+1}/${qrCodes.length}`, 'info');
+                    }
+                    
+                    // 让 UI 刷新
+                    if (i % 5 === 0) {
+                        await new Promise(resolve => setTimeout(resolve, 10));
+                    }
+                }
+                
+                showStatus('正在生成 ZIP 文件...', 'info');
+                const content = await zip.generateAsync({type: "blob"});
+                
+                saveAs(content, `qrcodes_${fileFingerprint}.zip`);
+                showStatus(`✅ 已生成 ${qrCodes.length} 个二维码`, 'success');
+                showToast('ZIP 文件下载已开始');
+            } catch (error) {
+                console.error('打包失败:', error);
+                showStatus('打包失败: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
 
         // 自动播放
         const playBtn = document.getElementById('playBtn');
@@ -1308,6 +1553,7 @@
             originalFileName = '';
             originalFileSize = 0;
             fileNameQrCode = null;
+            hasGenerated = false;
             
             fileInput.value = '';
             uploadArea.classList.remove('has-file');
@@ -1319,8 +1565,10 @@
             
             fileInfo.style.display = 'none';
             qrSection.classList.remove('show');
+            downloadSection.classList.remove('show');
             generateBtn.disabled = true;
             
+            // 重置滑块
             chunkSizeSlider.value = 800;
             chunkSizeValue.textContent = '800 B';
             CONFIG.CHUNK_SIZE = 800;
@@ -1328,6 +1576,8 @@
             qrSizeSlider.value = 400;
             qrSizeValue.textContent = '400 px';
             CONFIG.QR_SIZE = 400;
+            
+            hideRegenerateHints();
             
             document.getElementById('estimatedChunks').textContent = '-- 个';
             document.getElementById('estimationBar').style.width = '0%';
@@ -1341,11 +1591,11 @@
             console.log('QRSyncOffline 发送端已加载');
             
             if (typeof QRCode === 'undefined') {
-                showStatus('QRCode库未加载', 'error');
+                showStatus('QRCode库未加载，请检查网络连接', 'error');
             }
             
             if (typeof pako === 'undefined') {
-                showStatus('压缩库未加载', 'error');
+                showStatus('压缩库未加载，请检查网络连接', 'error');
             }
         });
     </script>
