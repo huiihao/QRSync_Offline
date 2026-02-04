@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QRSyncOffline - 发送端</title>
-    <script src="js/pako.min.js"></script>
-    <script src="js/qrcode.min.js"></script>
-    <!-- JSZip 用于批量打包 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- FileSaver 作为备选，如果加载失败则使用原生下载 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- 本地依赖库 -->
+    <script src="../js/pako.min.js"></script>
+    <script src="../js/qrcode.min.js"></script>
+    <script src="../js/jszip.min.js"></script>
+    <script src="../js/FileSaver.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -18,38 +17,55 @@
         }
         
         :root {
-            --bg: #f5f5f7;
-            --card-bg: rgba(255, 255, 255, 0.72);
-            --card-border: rgba(255, 255, 255, 0.5);
-            --text-primary: #1d1d1f;
-            --text-secondary: #86868b;
-            --accent: #0071e3;
-            --accent-hover: #0077ed;
-            --success: #34c759;
-            --warning: #ff9500;
-            --shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-            --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.12);
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: rgba(30, 30, 45, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --accent: #00d4ff;
+            --accent-secondary: #7b2cbf;
+            --success: #00f5d4;
+            --warning: #ff9f1c;
+            --error: #ef476f;
+            --glass-blur: blur(20px);
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-            background: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-primary);
             min-height: 100vh;
             color: var(--text-primary);
-            line-height: 1.47059;
+            line-height: 1.6;
             -webkit-font-smoothing: antialiased;
-            padding-bottom: 60px;
+            overflow-x: hidden;
         }
         
-        /* Navigation */
+        /* Animated background gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(0, 212, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(123, 44, 191, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(0, 245, 212, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        /* Navigation - Glassmorphism */
         nav {
             position: sticky;
             top: 0;
-            height: 52px;
-            background: rgba(255, 255, 255, 0.72);
-            backdrop-filter: saturate(180%) blur(20px);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            height: 64px;
+            background: rgba(18, 18, 26, 0.8);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--border-glass);
             z-index: 1000;
             display: flex;
             align-items: center;
@@ -58,36 +74,54 @@
         
         .nav-content {
             width: 100%;
-            max-width: 1024px;
-            padding: 0 22px;
+            max-width: 1200px;
+            padding: 0 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
         
         .logo {
-            font-size: 21px;
-            font-weight: 600;
-            letter-spacing: -0.021em;
+            font-size: 22px;
+            font-weight: 700;
             text-decoration: none;
             color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
         }
         
         .nav-links a {
-            color: var(--text-primary);
+            color: var(--text-secondary);
             text-decoration: none;
             font-size: 14px;
-            opacity: 0.8;
-            transition: opacity 0.3s;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
         }
         
         .nav-links a:hover {
-            opacity: 1;
+            color: var(--accent);
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.2);
         }
         
         /* Container */
         .container {
-            max-width: 720px;
+            max-width: 800px;
             margin: 0 auto;
             padding: 40px 20px;
         }
@@ -99,95 +133,112 @@
         }
         
         .page-header h1 {
-            font-size: 48px;
+            font-size: 42px;
             font-weight: 700;
-            letter-spacing: -0.003em;
             margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .page-header p {
-            font-size: 21px;
+            font-size: 18px;
             color: var(--text-secondary);
-            letter-spacing: -0.021em;
         }
         
-        /* Card */
+        /* Card - Glassmorphism */
         .card {
-            background: var(--card-bg);
-            backdrop-filter: saturate(180%) blur(20px);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
-            border: 1px solid var(--card-border);
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-glass);
             border-radius: 24px;
             padding: 32px;
             margin-bottom: 24px;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
         }
         
         .card:hover {
-            box-shadow: var(--shadow);
+            border-color: rgba(0, 212, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
         }
         
         .card-title {
-            font-size: 21px;
+            font-size: 20px;
             font-weight: 600;
             margin-bottom: 24px;
-            letter-spacing: -0.021em;
             display: flex;
             align-items: center;
             gap: 12px;
+            color: var(--text-primary);
         }
         
         .card-title .icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, var(--accent), #5ac8fa);
-            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(123, 44, 191, 0.2));
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 20px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
         }
         
         /* Upload Area */
         .upload-area {
-            border: 2px dashed rgba(0, 0, 0, 0.16);
+            border: 2px dashed rgba(0, 212, 255, 0.3);
             border-radius: 20px;
             padding: 60px 40px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.4);
+            background: rgba(0, 212, 255, 0.03);
         }
         
         .upload-area:hover {
             border-color: var(--accent);
-            background: rgba(0, 113, 227, 0.04);
+            background: rgba(0, 212, 255, 0.08);
+            transform: translateY(-2px);
         }
         
         .upload-area.dragover {
             border-color: var(--accent);
-            background: rgba(0, 113, 227, 0.08);
+            background: rgba(0, 212, 255, 0.12);
         }
         
         .upload-area.has-file {
             border-color: var(--success);
-            background: rgba(52, 199, 89, 0.04);
+            background: rgba(0, 245, 212, 0.08);
         }
         
         .upload-icon {
             font-size: 56px;
             margin-bottom: 16px;
+            filter: drop-shadow(0 4px 12px rgba(0, 212, 255, 0.3));
         }
         
         .upload-text {
-            font-size: 21px;
+            font-size: 20px;
             font-weight: 600;
             margin-bottom: 8px;
-            letter-spacing: -0.021em;
         }
         
         .upload-hint {
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text-secondary);
         }
         
@@ -199,15 +250,16 @@
         .file-info {
             margin-top: 24px;
             padding: 24px;
-            background: rgba(0, 0, 0, 0.02);
+            background: rgba(0, 0, 0, 0.2);
             border-radius: 16px;
+            border: 1px solid var(--border-glass);
         }
         
         .file-info-row {
             display: flex;
             justify-content: space-between;
             padding: 12px 0;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            border-bottom: 1px solid var(--border-glass);
         }
         
         .file-info-row:last-child {
@@ -215,29 +267,31 @@
         }
         
         .file-info-label {
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text-secondary);
         }
         
         .file-info-value {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 500;
             font-family: "SF Mono", monospace;
+            color: var(--text-primary);
         }
         
         .fingerprint {
             margin-top: 20px;
             padding: 20px;
-            background: linear-gradient(135deg, rgba(0, 113, 227, 0.08), rgba(90, 200, 250, 0.08));
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(123, 44, 191, 0.1));
             border-radius: 16px;
             text-align: center;
+            border: 1px solid rgba(0, 212, 255, 0.2);
         }
         
         .fingerprint-label {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-secondary);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.1em;
             margin-bottom: 8px;
         }
         
@@ -247,14 +301,16 @@
             font-weight: 700;
             color: var(--accent);
             letter-spacing: 4px;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
         }
         
         /* Slider */
         .slider-container {
             margin-bottom: 28px;
-            background: rgba(0,0,0,0.02);
+            background: rgba(0, 0, 0, 0.2);
             padding: 20px;
             border-radius: 16px;
+            border: 1px solid var(--border-glass);
         }
         
         .slider-header {
@@ -265,25 +321,27 @@
         }
         
         .slider-label {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 500;
+            color: var(--text-secondary);
         }
         
         .slider-value {
-            font-size: 15px;
+            font-size: 14px;
             color: var(--accent);
             font-weight: 600;
             font-family: "SF Mono", monospace;
-            background: rgba(0,113,227,0.1);
-            padding: 4px 12px;
-            border-radius: 980px;
+            background: rgba(0, 212, 255, 0.1);
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
         }
         
         input[type="range"] {
             width: 100%;
             height: 6px;
             border-radius: 3px;
-            background: rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.1);
             outline: none;
             -webkit-appearance: none;
             cursor: pointer;
@@ -291,25 +349,25 @@
         
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
             cursor: pointer;
             transition: transform 0.2s;
-            border: 2px solid var(--accent);
+            border: 2px solid white;
         }
         
         input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.1);
+            transform: scale(1.15);
         }
         
         .slider-marks {
             display: flex;
             justify-content: space-between;
             margin-top: 8px;
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-secondary);
         }
         
@@ -329,8 +387,9 @@
         .progress-section {
             margin-top: 24px;
             padding: 20px;
-            background: rgba(0, 0, 0, 0.02);
+            background: rgba(0, 0, 0, 0.2);
             border-radius: 16px;
+            border: 1px solid var(--border-glass);
         }
         
         .progress-header {
@@ -340,28 +399,29 @@
         }
         
         .progress-label {
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text-secondary);
         }
         
         .progress-value {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             color: var(--accent);
         }
         
         .progress-bar {
             height: 8px;
-            background: rgba(0, 0, 0, 0.06);
+            background: rgba(255, 255, 255, 0.08);
             border-radius: 4px;
             overflow: hidden;
         }
         
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--accent), #5ac8fa);
+            background: linear-gradient(90deg, var(--accent), var(--success));
             border-radius: 4px;
             transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
         }
         
         /* Buttons */
@@ -373,54 +433,76 @@
         }
         
         .btn {
-            padding: 16px 32px;
-            border-radius: 980px;
-            font-size: 17px;
-            font-weight: 400;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
             border: none;
             cursor: pointer;
             transition: all 0.3s ease;
-            letter-spacing: -0.022em;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             flex: 1;
-            min-width: 200px;
+            min-width: 180px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
         }
         
         .btn-primary {
-            background: var(--accent);
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
             color: white;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
         }
         
         .btn-primary:hover:not(:disabled) {
-            background: var(--accent-hover);
-            transform: scale(1.02);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 212, 255, 0.4);
         }
         
         .btn-primary:disabled {
-            background: rgba(0, 0, 0, 0.16);
+            background: rgba(255, 255, 255, 0.1);
             cursor: not-allowed;
+            box-shadow: none;
         }
         
         .btn-secondary {
-            background: rgba(0, 0, 0, 0.06);
+            background: rgba(255, 255, 255, 0.08);
             color: var(--text-primary);
+            border: 1px solid var(--border-glass);
         }
         
         .btn-secondary:hover:not(:disabled) {
-            background: rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(0, 212, 255, 0.3);
         }
         
         .btn-success {
-            background: var(--success);
-            color: white;
+            background: linear-gradient(135deg, var(--success), #00c9a7);
+            color: #000;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(0, 245, 212, 0.3);
         }
         
         .btn-success:hover:not(:disabled) {
-            background: #30b350;
-            transform: scale(1.02);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 245, 212, 0.4);
         }
         
         /* Status */
@@ -428,9 +510,10 @@
             padding: 16px 24px;
             border-radius: 12px;
             margin-top: 24px;
-            font-size: 15px;
+            font-size: 14px;
             text-align: center;
             display: none;
+            border: 1px solid transparent;
         }
         
         .status.show {
@@ -438,18 +521,21 @@
         }
         
         .status.info {
-            background: rgba(0, 113, 227, 0.08);
+            background: rgba(0, 212, 255, 0.1);
             color: var(--accent);
+            border-color: rgba(0, 212, 255, 0.3);
         }
         
         .status.success {
-            background: rgba(52, 199, 89, 0.08);
+            background: rgba(0, 245, 212, 0.1);
             color: var(--success);
+            border-color: rgba(0, 245, 212, 0.3);
         }
         
         .status.error {
-            background: rgba(255, 59, 48, 0.08);
-            color: #ff3b30;
+            background: rgba(239, 71, 111, 0.1);
+            color: var(--error);
+            border-color: rgba(239, 71, 111, 0.3);
         }
         
         /* QR Section */
@@ -471,16 +557,18 @@
         
         .qr-nav-btn {
             padding: 12px 24px;
-            background: rgba(0, 0, 0, 0.06);
-            border: none;
-            border-radius: 980px;
-            font-size: 15px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            font-size: 14px;
+            color: var(--text-primary);
             cursor: pointer;
             transition: all 0.3s;
         }
         
         .qr-nav-btn:hover:not(:disabled) {
-            background: rgba(0, 0, 0, 0.1);
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.3);
         }
         
         .qr-nav-btn:disabled {
@@ -497,18 +585,21 @@
         
         .qr-container {
             padding: 32px;
-            background: white;
+            background: rgba(0, 0, 0, 0.3);
             border-radius: 24px;
-            box-shadow: var(--shadow);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             transition: all 0.3s ease;
+            border: 2px solid transparent;
         }
         
         .qr-container.data-qr {
-            border: 3px solid var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.2);
         }
         
         .qr-container.filename-qr {
-            border: 3px solid var(--warning);
+            border-color: var(--warning);
+            box-shadow: 0 8px 32px rgba(255, 159, 28, 0.2);
         }
         
         #qrcode img, #qrcode canvas {
@@ -525,32 +616,34 @@
             font-size: 28px;
             font-weight: 700;
             margin-bottom: 8px;
-            letter-spacing: -0.021em;
+            color: var(--text-primary);
         }
         
         .qr-type {
             display: inline-block;
             padding: 6px 16px;
-            border-radius: 980px;
-            font-size: 13px;
+            border-radius: 20px;
+            font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
         
         .qr-type.data {
-            background: rgba(0, 113, 227, 0.1);
+            background: rgba(0, 212, 255, 0.15);
             color: var(--accent);
+            border: 1px solid rgba(0, 212, 255, 0.3);
         }
         
         .qr-type.filename {
-            background: rgba(255, 149, 0, 0.1);
+            background: rgba(255, 159, 28, 0.15);
             color: var(--warning);
+            border: 1px solid rgba(255, 159, 28, 0.3);
         }
         
         .qr-hint {
             margin-top: 12px;
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text-secondary);
         }
         
@@ -558,7 +651,7 @@
         .download-section {
             margin-top: 24px;
             padding-top: 24px;
-            border-top: 1px solid rgba(0,0,0,0.08);
+            border-top: 1px solid var(--border-glass);
             display: none;
         }
         
@@ -582,9 +675,10 @@
             margin-top: 32px;
             max-height: 200px;
             overflow-y: auto;
-            padding: 10px;
-            background: rgba(0,0,0,0.02);
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.2);
             border-radius: 16px;
+            border: 1px solid var(--border-glass);
         }
         
         .chunk-dot {
@@ -599,28 +693,32 @@
             cursor: pointer;
             transition: all 0.3s;
             font-family: "SF Mono", monospace;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-glass);
         }
         
         .chunk-dot.pending {
-            background: rgba(0, 0, 0, 0.06);
-            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.05);
         }
         
         .chunk-dot.generated {
-            background: var(--accent);
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
             color: white;
             transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+            border-color: transparent;
         }
         
         .chunk-dot.filename {
-            background: var(--warning);
+            background: linear-gradient(135deg, var(--warning), #ff6b35);
             color: white;
+            box-shadow: 0 4px 12px rgba(255, 159, 28, 0.3);
+            border-color: transparent;
         }
         
         .chunk-dot:hover {
             transform: scale(1.1);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
         /* Toggle */
@@ -631,12 +729,13 @@
             gap: 16px;
             margin-bottom: 24px;
             padding: 16px;
-            background: rgba(0, 0, 0, 0.02);
+            background: rgba(0, 0, 0, 0.2);
             border-radius: 16px;
+            border: 1px solid var(--border-glass);
         }
         
         .toggle-label {
-            font-size: 15px;
+            font-size: 14px;
             color: var(--text-secondary);
         }
         
@@ -659,26 +758,28 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.16);
+            background: rgba(255, 255, 255, 0.1);
             transition: 0.3s;
             border-radius: 32px;
+            border: 1px solid var(--border-glass);
         }
         
         .toggle-slider:before {
             position: absolute;
             content: "";
-            height: 28px;
-            width: 28px;
+            height: 26px;
+            width: 26px;
             left: 2px;
             bottom: 2px;
             background: white;
             transition: 0.3s;
             border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         
         .toggle input:checked + .toggle-slider {
-            background: var(--accent);
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            border-color: transparent;
         }
         
         .toggle input:checked + .toggle-slider:before {
@@ -691,17 +792,19 @@
             bottom: 40px;
             left: 50%;
             transform: translateX(-50%) translateY(100px);
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(20px);
+            background: rgba(18, 18, 26, 0.95);
+            backdrop-filter: var(--glass-blur);
             color: white;
             padding: 16px 32px;
-            border-radius: 980px;
-            font-size: 15px;
+            border-radius: 16px;
+            font-size: 14px;
             opacity: 0;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 10000;
             text-align: center;
             max-width: 80%;
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
         
         .toast.show {
@@ -714,9 +817,9 @@
             display: inline-block;
             width: 18px;
             height: 18px;
-            border: 2px solid rgba(255,255,255,0.3);
+            border: 2px solid rgba(255,255,255,0.2);
             border-radius: 50%;
-            border-top-color: white;
+            border-top-color: var(--accent);
             animation: spin 1s linear infinite;
         }
         
@@ -726,10 +829,10 @@
         
         @media (max-width: 734px) {
             .page-header h1 {
-                font-size: 32px;
+                font-size: 28px;
             }
             .card {
-                padding: 24px;
+                padding: 20px;
             }
             .btn {
                 width: 100%;
@@ -738,15 +841,22 @@
             .qr-container {
                 padding: 20px;
             }
+            .nav-links a {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
         }
     </style>
 </head>
 <body>
     <nav>
         <div class="nav-content">
-            <a href="../index.html" class="logo">QRSyncOffline</a>
+            <a href="../index.html" class="logo">
+                <div class="logo-icon">📡</div>
+                QRSyncOffline
+            </a>
             <div class="nav-links">
-                <a href="../receiver/index.html">接收端</a>
+                <a href="../receiver/index.html">接收端 →</a>
             </div>
         </div>
     </nav>
@@ -800,13 +910,13 @@
             <div class="slider-container">
                 <div class="slider-header">
                     <span class="slider-label">分片大小</span>
-                    <span class="slider-value" id="chunkSizeValue">800 B</span>
+                    <span class="slider-value" id="chunkSizeValue">600 B</span>
                 </div>
-                <input type="range" id="chunkSizeSlider" min="400" max="1500" value="800" step="50">
+                <input type="range" id="chunkSizeSlider" min="400" max="1200" value="600" step="50">
                 <div class="slider-marks">
                     <span>400B</span>
-                    <span>800B</span>
-                    <span>1500B</span>
+                    <span>600B</span>
+                    <span>1200B</span>
                 </div>
                 <div class="slider-hint" id="chunkSizeHint">⚠️ 更改此设置需要重新生成二维码</div>
             </div>
@@ -912,7 +1022,7 @@
     <script>
         // ==================== 配置和常量 ====================
         const CONFIG = {
-            CHUNK_SIZE: 800,
+            CHUNK_SIZE: 600,
             QR_SIZE: 400,
             MAX_JSON_SIZE: 1800,
             QR_MAX_CAPACITY: 2953,
@@ -959,7 +1069,7 @@
 
         function calculateCRC32(data) {
             if (typeof pako !== 'undefined' && pako.crc32) {
-                return pako.crc32(data).toString(36).padStart(5, '0').slice(-5);
+                return pako.crc32(data).toString(36).padStart(5, '0').slice(-5).toLowerCase();
             }
             
             const table = new Uint32Array(256);
@@ -976,7 +1086,7 @@
                 crc = (crc >>> 8) ^ table[(crc ^ data.charCodeAt(i)) & 0xFF];
             }
             crc = (crc ^ 0xFFFFFFFF) >>> 0;
-            return crc.toString(36).padStart(5, '0').slice(-5);
+            return crc.toString(36).padStart(5, '0').slice(-5).toLowerCase();
         }
 
         function encodeFileName(filename) {
@@ -1022,15 +1132,11 @@
             });
         }
 
-        // 安全的文件保存函数（支持 FileSaver 或原生方案）
         function saveFile(blob, filename) {
-            // 优先使用 FileSaver.js
             if (typeof saveAs === 'function') {
                 saveAs(blob, filename);
                 return;
             }
-            
-            // 备用方案：使用原生下载
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -1038,8 +1144,6 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            
-            // 延迟释放 URL 对象
             setTimeout(() => URL.revokeObjectURL(url), 100);
         }
 
@@ -1297,7 +1401,6 @@
                 index: chunks.length
             });
             
-            // 更新统计信息
             document.getElementById('totalQrCount').textContent = totalQRCodes;
             document.getElementById('dataQrCount').textContent = chunks.length;
             downloadSection.classList.add('show');
@@ -1353,8 +1456,8 @@
                 text: JSON.stringify(qrData.data),
                 width: CONFIG.QR_SIZE,
                 height: CONFIG.QR_SIZE,
-                colorDark: isFilenameQR ? '#ff9500' : '#0071e3',
-                colorLight: '#ffffff',
+                colorDark: isFilenameQR ? '#ff9f1c' : '#00d4ff',
+                colorLight: '#000000',
                 correctLevel: QRCode.CorrectLevel.L
             });
             
@@ -1368,7 +1471,6 @@
                 ? '⚠️ 请最后扫描此二维码' 
                 : '请使用手机接收端扫描此二维码';
             
-            // 更新网格高亮
             document.querySelectorAll('.chunk-dot').forEach((dot, i) => {
                 dot.classList.remove('generated');
                 if (i === index) {
@@ -1421,21 +1523,9 @@
         async function downloadAllQRCodes() {
             if (!qrCodes.length) return;
             
-            // 确保 JSZip 已加载
             if (typeof JSZip === 'undefined') {
-                showStatus('正在加载 ZIP 库，请稍候...', 'info');
-                try {
-                    await new Promise((resolve, reject) => {
-                        const script = document.createElement('script');
-                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-                        script.onload = resolve;
-                        script.onerror = () => reject(new Error('无法加载 JSZip'));
-                        document.head.appendChild(script);
-                    });
-                } catch (e) {
-                    showStatus('加载 ZIP 库失败，请检查网络连接', 'error');
-                    return;
-                }
+                showStatus('ZIP库未加载', 'error');
+                return;
             }
             
             const zip = new JSZip();
@@ -1448,12 +1538,10 @@
             showStatus('正在打包所有二维码，请稍候...', 'info');
             
             try {
-                // 重新生成所有二维码以捕获图像
                 for (let i = 0; i < qrCodes.length; i++) {
                     const qr = qrCodes[i];
                     const isFilename = qr.type === CONFIG.PACKET_TYPES.FILENAME;
                     
-                    // 创建临时容器（隐藏）
                     const tempDiv = document.createElement('div');
                     tempDiv.style.position = 'absolute';
                     tempDiv.style.left = '-9999px';
@@ -1464,12 +1552,11 @@
                         text: JSON.stringify(qr.data),
                         width: CONFIG.QR_SIZE,
                         height: CONFIG.QR_SIZE,
-                        colorDark: isFilename ? '#ff9500' : '#0071e3',
-                        colorLight: '#ffffff',
+                        colorDark: isFilename ? '#ff9f1c' : '#00d4ff',
+                        colorLight: '#000000',
                         correctLevel: QRCode.CorrectLevel.L
                     });
                     
-                    // 等待生成完成
                     await new Promise(resolve => setTimeout(resolve, 50));
                     
                     const canvas = tempDiv.querySelector('canvas');
@@ -1483,12 +1570,10 @@
                     
                     document.body.removeChild(tempDiv);
                     
-                    // 更新进度（每10个或最后一个）
                     if (i % 10 === 0 || i === qrCodes.length - 1) {
                         showStatus(`打包进度: ${i+1}/${qrCodes.length}`, 'info');
                     }
                     
-                    // 让 UI 刷新
                     if (i % 5 === 0) {
                         await new Promise(resolve => setTimeout(resolve, 10));
                     }
@@ -1584,10 +1669,9 @@
             downloadSection.classList.remove('show');
             generateBtn.disabled = true;
             
-            // 重置滑块
-            chunkSizeSlider.value = 800;
-            chunkSizeValue.textContent = '800 B';
-            CONFIG.CHUNK_SIZE = 800;
+            chunkSizeSlider.value = 600;
+            chunkSizeValue.textContent = '600 B';
+            CONFIG.CHUNK_SIZE = 600;
             
             qrSizeSlider.value = 400;
             qrSizeValue.textContent = '400 px';
@@ -1607,11 +1691,11 @@
             console.log('QRSyncOffline 发送端已加载');
             
             if (typeof QRCode === 'undefined') {
-                showStatus('QRCode库未加载，请检查网络连接', 'error');
+                showStatus('QRCode库未加载', 'error');
             }
             
             if (typeof pako === 'undefined') {
-                showStatus('压缩库未加载，请检查网络连接', 'error');
+                showStatus('压缩库未加载', 'error');
             }
         });
     </script>

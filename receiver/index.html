@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>QRSyncOffline - 接收端</title>
-    <script src="js/index.min.js"></script>
-    <script src="js/pako.min.js"></script>
-    <script src="js/localforage.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <!-- 本地依赖库 -->
+    <script src="../js/zxing-library.min.js"></script>
+    <script src="../js/pako.min.js"></script>
+    <script src="../js/localforage.min.js"></script>
+    <script src="../js/jsQR.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -18,38 +19,56 @@
         }
         
         :root {
-            --bg: #f5f5f7;
-            --card-bg: rgba(255, 255, 255, 0.72);
-            --card-border: rgba(255, 255, 255, 0.5);
-            --text-primary: #1d1d1f;
-            --text-secondary: #86868b;
-            --accent: #0071e3;
-            --accent-hover: #0077ed;
-            --success: #34c759;
-            --warning: #ff9500;
-            --error: #ff3b30;
-            --shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: rgba(30, 30, 45, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --accent: #00d4ff;
+            --accent-secondary: #7b2cbf;
+            --success: #00f5d4;
+            --warning: #ff9f1c;
+            --error: #ef476f;
+            --glass-blur: blur(20px);
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-            background: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-primary);
             min-height: 100vh;
             color: var(--text-primary);
-            line-height: 1.47059;
+            line-height: 1.6;
             -webkit-font-smoothing: antialiased;
         }
         
+        /* Animated background gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(0, 212, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(123, 44, 191, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(0, 245, 212, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        /* Navigation - Glassmorphism */
         nav {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            height: 52px;
-            background: rgba(255, 255, 255, 0.72);
-            backdrop-filter: saturate(180%) blur(20px);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            height: 64px;
+            background: rgba(18, 18, 26, 0.8);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--border-glass);
             z-index: 1000;
             display: flex;
             align-items: center;
@@ -58,18 +77,49 @@
         
         .nav-content {
             width: 100%;
-            max-width: 1024px;
-            padding: 0 22px;
+            max-width: 1200px;
+            padding: 0 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
         
         .logo {
-            font-size: 21px;
-            font-weight: 600;
+            font-size: 22px;
+            font-weight: 700;
             text-decoration: none;
             color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .nav-links a:hover {
+            color: var(--accent);
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.2);
         }
         
         .container {
@@ -79,27 +129,32 @@
         }
         
         h1 {
-            font-size: 48px;
+            font-size: 42px;
             font-weight: 700;
             text-align: center;
             margin-bottom: 40px;
-            letter-spacing: -0.003em;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         @media (max-width: 734px) {
-            h1 { font-size: 32px; }
+            h1 { font-size: 28px; }
             .container { padding-top: 80px; }
         }
         
+        /* Mode Switcher */
         .mode-switcher {
             display: flex;
-            background: rgba(0, 0, 0, 0.04);
-            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
             padding: 4px;
             margin-bottom: 30px;
             width: fit-content;
             margin-left: auto;
             margin-right: auto;
+            border: 1px solid var(--border-glass);
         }
         
         .mode-btn {
@@ -110,7 +165,7 @@
             font-size: 15px;
             font-weight: 500;
             cursor: pointer;
-            border-radius: 8px;
+            border-radius: 12px;
             transition: all 0.3s;
             display: flex;
             align-items: center;
@@ -118,23 +173,36 @@
         }
         
         .mode-btn.active {
-            background: white;
-            color: var(--accent);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
         }
         
         @media (max-width: 734px) {
             .mode-btn { padding: 10px 16px; font-size: 14px; }
         }
         
+        /* Scanner Container - Glassmorphism */
         .scanner-container {
-            background: var(--card-bg);
-            backdrop-filter: saturate(180%) blur(20px);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
-            border: 1px solid var(--card-border);
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-glass);
             border-radius: 24px;
             padding: 40px;
-            box-shadow: var(--shadow);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .scanner-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
         }
         
         @media (max-width: 734px) {
@@ -163,17 +231,17 @@
         #camera-select {
             flex: 1;
             min-width: 200px;
-            padding: 12px;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
+            padding: 14px;
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
             font-size: 15px;
-            background: white;
+            background: rgba(0, 0, 0, 0.3);
             appearance: none;
             -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2386868b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2300d4ff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 36px;
+            background-position: right 14px center;
+            padding-right: 40px;
             color: var(--text-primary);
         }
         
@@ -183,6 +251,7 @@
             border-radius: 20px;
             overflow: hidden;
             display: none;
+            border: 2px solid var(--border-glass);
         }
         
         .scan-section-wrapper.active {
@@ -237,19 +306,19 @@
             height: 70%;
             border: 3px solid var(--accent);
             border-radius: 20px;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
             animation: scan-pulse 2s infinite;
         }
         
         @keyframes scan-pulse {
-            0% { border-color: var(--accent); }
-            50% { border-color: var(--success); }
-            100% { border-color: var(--accent); }
+            0% { border-color: var(--accent); box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 212, 255, 0.3); }
+            50% { border-color: var(--success); box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 245, 212, 0.5); }
+            100% { border-color: var(--accent); box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 212, 255, 0.3); }
         }
         
         .scan-success .scan-frame {
             border-color: var(--success) !important;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 20px rgba(52, 199, 89, 0.5) !important;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 245, 212, 0.6) !important;
             animation: none !important;
         }
         
@@ -270,13 +339,13 @@
             position: absolute;
             top: 15px;
             right: 15px;
-            width: 36px;
-            height: 36px;
-            background: rgba(255, 59, 48, 0.9);
+            width: 40px;
+            height: 40px;
+            background: rgba(239, 71, 111, 0.9);
             border: 2px solid white;
             border-radius: 50%;
             color: white;
-            font-size: 20px;
+            font-size: 24px;
             cursor: pointer;
             z-index: 100;
             display: flex;
@@ -292,7 +361,7 @@
         }
         
         .scan-tips {
-            background: rgba(0, 113, 227, 0.9);
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.9), rgba(123, 44, 191, 0.9));
             color: white;
             text-align: center;
             padding: 12px;
@@ -305,19 +374,20 @@
         
         .scan-tips p { margin: 3px 0; }
         
+        /* Floating Message */
         .floating-message {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(52, 199, 89, 0.95);
-            color: white;
+            background: rgba(0, 245, 212, 0.95);
+            color: #000;
             padding: 20px 30px;
-            border-radius: 50px;
+            border-radius: 16px;
             font-size: 18px;
             font-weight: 600;
             z-index: 2000;
-            box-shadow: 0 10px 30px rgba(52, 199, 89, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 245, 212, 0.4);
             animation: floatUp 1.5s ease forwards;
             display: flex;
             align-items: center;
@@ -329,8 +399,9 @@
         }
         
         .floating-error {
-            background: rgba(255, 59, 48, 0.95);
-            box-shadow: 0 10px 30px rgba(255, 59, 48, 0.3);
+            background: rgba(239, 71, 111, 0.95);
+            color: white;
+            box-shadow: 0 10px 30px rgba(239, 71, 111, 0.4);
         }
         
         @keyframes floatUp {
@@ -340,12 +411,13 @@
             100% { opacity: 0; transform: translate(-50%, -70%); }
         }
         
+        /* Upload Zone */
         .upload-zone {
-            border: 2px dashed rgba(0, 113, 227, 0.3);
+            border: 2px dashed rgba(0, 212, 255, 0.3);
             border-radius: 16px;
             padding: 40px;
             text-align: center;
-            background: rgba(0, 113, 227, 0.02);
+            background: rgba(0, 212, 255, 0.03);
             transition: all 0.3s;
             cursor: pointer;
             margin-bottom: 20px;
@@ -353,32 +425,34 @@
         
         .upload-zone:hover, .upload-zone.dragover {
             border-color: var(--accent);
-            background: rgba(0, 113, 227, 0.05);
+            background: rgba(0, 212, 255, 0.08);
         }
         
-        .upload-zone h3 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
-        .upload-zone p { font-size: 15px; color: var(--text-secondary); margin-bottom: 12px; }
+        .upload-zone h3 { font-size: 20px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+        .upload-zone p { font-size: 14px; color: var(--text-secondary); margin-bottom: 12px; }
         
         .paste-tip {
             display: inline-flex;
             align-items: center;
             gap: 6px;
             padding: 8px 16px;
-            background: white;
+            background: rgba(0, 0, 0, 0.3);
             border-radius: 8px;
             font-size: 13px;
             color: var(--text-secondary);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-glass);
         }
         
         kbd {
             padding: 2px 6px;
-            background: rgba(0,0,0,0.05);
+            background: rgba(0, 212, 255, 0.2);
             border-radius: 4px;
             font-family: monospace;
             font-size: 12px;
+            color: var(--accent);
         }
         
+        /* Preview Section */
         .preview-section { display: none; margin-bottom: 24px; }
         .preview-section.active { display: block; }
         
@@ -389,6 +463,7 @@
             overflow: hidden;
             position: relative;
             margin-bottom: 20px;
+            border: 2px solid var(--border-glass);
         }
         
         #preview-canvas {
@@ -416,9 +491,10 @@
             border: 3px solid var(--accent);
             border-radius: 20px;
             position: relative;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
         }
         
+        /* Queue Section */
         .queue-section { margin-bottom: 24px; }
         
         .queue-header {
@@ -445,7 +521,7 @@
             overflow: hidden;
             position: relative;
             border: 3px solid transparent;
-            background: rgba(0,0,0,0.05);
+            background: rgba(0, 0, 0, 0.3);
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -459,53 +535,96 @@
         .queue-item.pending { border-color: var(--accent); }
         .queue-item.completed { border-color: var(--success); opacity: 0.7; }
         .queue-item.error { border-color: var(--error); }
-        .queue-item.active { box-shadow: 0 0 0 3px rgba(0,113,227,0.3); }
+        .queue-item.active { box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.3); }
         
         .queue-badge {
             position: absolute;
             top: 4px;
             right: 4px;
             background: var(--accent);
-            color: white;
-            width: 20px;
-            height: 20px;
+            color: #000;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 11px;
-            font-weight: 600;
+            font-weight: 700;
         }
         
         .queue-item.completed .queue-badge { background: var(--success); }
         
+        /* Buttons */
         .btn {
             padding: 14px 28px;
-            border-radius: 980px;
-            font-size: 17px;
-            font-weight: 400;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
             border: none;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             touch-action: manipulation;
             -webkit-touch-callout: none;
-            background: var(--accent);
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
             color: white;
             width: 100%;
+            position: relative;
+            overflow: hidden;
         }
         
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-secondary { background: rgba(0,0,0,0.08); color: var(--text-primary); }
-        .btn-success { background: var(--success); }
-        .btn-danger { background: var(--error); color: white; }
-        .btn-danger:hover:not(:disabled) { background: #d63030; }
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn:disabled { 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+        }
+        
+        .btn-secondary { 
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border: 1px solid var(--border-glass);
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+        
+        .btn-success { 
+            background: linear-gradient(135deg, var(--success), #00c9a7);
+            color: #000;
+            font-weight: 600;
+        }
+        
+        .btn-danger { 
+            background: linear-gradient(135deg, var(--error), #d63030);
+            color: white;
+        }
+        
+        .btn-danger:hover:not(:disabled) { 
+            background: linear-gradient(135deg, #d63030, #c0392b);
+        }
         
         @media (max-width: 734px) {
-            .btn { padding: 16px; font-size: 16px; }
+            .btn { padding: 16px; font-size: 15px; }
         }
         
         .action-buttons {
@@ -516,12 +635,13 @@
         
         .action-buttons .btn { flex: 1; min-width: 140px; }
         
+        /* Danger Zone */
         .danger-zone {
             margin-top: 30px;
             padding: 20px;
-            border: 1px solid rgba(255, 59, 48, 0.2);
+            border: 1px solid rgba(239, 71, 111, 0.3);
             border-radius: 16px;
-            background: rgba(255, 59, 48, 0.03);
+            background: rgba(239, 71, 111, 0.05);
         }
         
         .danger-zone-title {
@@ -535,9 +655,9 @@
         }
         
         .danger-zone .btn {
-            background: rgba(255, 59, 48, 0.1);
+            background: rgba(239, 71, 111, 0.15);
             color: var(--error);
-            border: 1px solid rgba(255, 59, 48, 0.3);
+            border: 1px solid rgba(239, 71, 111, 0.3);
         }
         
         .danger-zone .btn:hover:not(:disabled) {
@@ -545,11 +665,13 @@
             color: white;
         }
         
+        /* Status Bar */
         .status-bar {
-            background: rgba(0,0,0,0.04);
-            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
             padding: 20px;
             margin-top: 30px;
+            border: 1px solid var(--border-glass);
         }
         
         .status-header {
@@ -562,22 +684,22 @@
         }
         
         .fingerprint-display {
-            padding: 8px 12px;
-            background: rgba(0, 113, 227, 0.1);
-            border-radius: 8px;
+            padding: 12px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 12px;
             margin-bottom: 12px;
             font-family: 'Courier New', monospace;
             font-size: 13px;
             text-align: center;
-            border: 1px solid rgba(0, 113, 227, 0.2);
-            color: var(--text-secondary);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            color: var(--accent);
             word-break: break-all;
         }
         
         .progress-bar {
             width: 100%;
             height: 8px;
-            background: rgba(0,0,0,0.08);
+            background: rgba(255, 255, 255, 0.08);
             border-radius: 4px;
             overflow: hidden;
             margin-bottom: 12px;
@@ -585,10 +707,10 @@
         
         .progress-fill {
             height: 100%;
-            background: var(--accent);
-            border-radius: 4px;
-            transition: width 0.3s;
+            background: linear-gradient(90deg, var(--accent), var(--success));
             width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
         }
         
         .chunks-grid {
@@ -604,21 +726,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0,0,0,0.06);
-            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
             font-size: 12px;
             font-weight: 600;
             color: var(--text-secondary);
             transition: all 0.3s;
+            border: 1px solid var(--border-glass);
         }
         
         .chunk-cell.filled {
-            background: var(--success);
-            color: white;
+            background: linear-gradient(135deg, var(--success), #00c9a7);
+            color: #000;
             animation: chunk-pop 0.3s ease;
+            border-color: transparent;
         }
         
-        .chunk-cell.filename { background: var(--warning); color: white; }
+        .chunk-cell.filename { 
+            background: linear-gradient(135deg, var(--warning), #ff6b35);
+            color: white;
+            border-color: transparent;
+        }
         
         @keyframes chunk-pop {
             0% { transform: scale(0.8); }
@@ -626,22 +754,25 @@
             100% { transform: scale(1); }
         }
         
+        /* Toast */
         .toast {
             position: fixed;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%) translateY(100px);
-            background: rgba(0,0,0,0.8);
+            background: rgba(18, 18, 26, 0.95);
             color: white;
             padding: 14px 28px;
-            border-radius: 12px;
-            font-size: 15px;
+            border-radius: 16px;
+            font-size: 14px;
             opacity: 0;
             transition: all 0.3s;
             z-index: 2000;
             backdrop-filter: blur(10px);
             text-align: center;
             max-width: 90%;
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
         
         .toast.show {
@@ -652,25 +783,61 @@
         .hidden-file-input { display: none; }
         
         .status-message {
-            padding: 12px;
-            border-radius: 8px;
+            padding: 14px;
+            border-radius: 12px;
             margin-bottom: 16px;
             text-align: center;
             font-size: 14px;
             display: none;
+            border: 1px solid transparent;
         }
         
         .status-message.show { display: block; }
-        .status-success { background: rgba(52, 199, 89, 0.1); color: var(--success); }
-        .status-error { background: rgba(255, 59, 48, 0.1); color: var(--error); }
-        .status-info { background: rgba(0, 113, 227, 0.1); color: var(--accent); }
+        
+        .status-success { 
+            background: rgba(0, 245, 212, 0.1);
+            color: var(--success);
+            border-color: rgba(0, 245, 212, 0.3);
+        }
+        
+        .status-error { 
+            background: rgba(239, 71, 111, 0.1);
+            color: var(--error);
+            border-color: rgba(239, 71, 111, 0.3);
+        }
+        
+        .status-info { 
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--accent);
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+        
+        @media (max-width: 480px) {
+            .chunk-item {
+                width: 30px;
+                height: 30px;
+                font-size: 12px;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .app-container {
+                max-width: 500px;
+                margin: 0 auto;
+            }
+        }
     </style>
 </head>
 <body>
     <nav>
         <div class="nav-content">
-            <a href="../index.html" class="logo">QRSyncOffline</a>
-            <div style="font-size: 14px; color: var(--text-secondary);">接收端</div>
+            <a href="../index.html" class="logo">
+                <div class="logo-icon">📡</div>
+                QRSyncOffline
+            </a>
+            <div class="nav-links">
+                <a href="../send/index.html">发送端 →</a>
+            </div>
         </div>
     </nav>
     
@@ -713,12 +880,12 @@
                         </div>
                     </div>
                     <div class="scan-tips">
-                        <p>请将二维码对准框内 | ZXing 0.21.3 引擎</p>
+                        <p>请将二维码对准扫描框内</p>
                         <p>先扫描数据二维码，最后扫描文件名二维码</p>
                     </div>
                 </div>
                 
-                <div id="camera-status" class="status-message status-info">
+                <div id="camera-status" class="status-message status-info show">
                     等待扫描第一个二维码...
                 </div>
             </div>
@@ -832,12 +999,13 @@
         let imageQueue = [];
         let currentImageIndex = -1;
 
-        // ==================== CRC32 ====================
+        // ==================== CRC32 (与发送端完全一致) ====================
         function calculateCRC32(data) {
             if (typeof pako !== 'undefined' && pako.crc32) {
                 const crc = pako.crc32(data);
-                return crc.toString(36).padStart(5, '0').slice(-5);
+                return crc.toString(36).padStart(5, '0').slice(-5).toLowerCase();
             }
+            
             const table = new Uint32Array(256);
             for (let i = 0; i < 256; i++) {
                 let c = i;
@@ -846,23 +1014,31 @@
                 }
                 table[i] = c;
             }
+            
             let crc = 0xFFFFFFFF;
             for (let i = 0; i < data.length; i++) {
                 crc = (crc >>> 8) ^ table[(crc ^ data.charCodeAt(i)) & 0xFF];
             }
             crc = (crc ^ 0xFFFFFFFF) >>> 0;
-            return crc.toString(36).padStart(5, '0').slice(-5);
+            return crc.toString(36).padStart(5, '0').slice(-5).toLowerCase();
         }
 
+        // ==================== 文件名解码 (与发送端配对) ====================
         function decodeFileName(base64Name) {
             try {
                 const binaryStr = atob(base64Name);
                 const bytes = new Uint8Array(binaryStr.length);
-                for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-                return new TextDecoder('utf-8').decode(bytes);
+                for (let i = 0; i < binaryStr.length; i++) {
+                    bytes[i] = binaryStr.charCodeAt(i);
+                }
+                const decoder = new TextDecoder('utf-8');
+                return decoder.decode(bytes);
             } catch (e) {
-                try { return decodeURIComponent(atob(base64Name)); } 
-                catch (e2) { return base64Name; }
+                try {
+                    return decodeURIComponent(atob(base64Name));
+                } catch (e2) {
+                    return base64Name;
+                }
             }
         }
         
@@ -872,8 +1048,9 @@
             document.getElementById('kbd-cmd').textContent = isMac ? '⌘' : 'Ctrl';
             document.addEventListener('paste', handlePaste);
             
-            if (typeof ZXing !== 'undefined') await initCameraList();
-            else {
+            if (typeof ZXing !== 'undefined') {
+                await initCameraList();
+            } else {
                 document.getElementById('camera-select').innerHTML = '<option value="">ZXing 库加载失败</option>';
                 document.getElementById('btn-start').disabled = true;
                 document.getElementById('scan-btn-text').textContent = '❌ 库加载失败';
@@ -926,8 +1103,11 @@
         // ==================== Camera ====================
         async function initCameraList() {
             try {
-                try { await navigator.mediaDevices.getUserMedia({ video: true }); } 
-                catch (permErr) { console.warn('权限获取失败'); }
+                try { 
+                    await navigator.mediaDevices.getUserMedia({ video: true }); 
+                } catch (permErr) { 
+                    console.warn('权限获取失败'); 
+                }
                 
                 let videoInputDevices = [];
                 try {
@@ -972,14 +1152,25 @@
                 showFloatingMessage('ZXing 库未加载', true);
                 return;
             }
+            
             const deviceId = document.getElementById('camera-select').value;
             try {
                 document.getElementById('btn-start').disabled = true;
                 document.getElementById('scan-btn-text').textContent = '⏳ 启动中...';
-                codeReader = new ZXing.BrowserQRCodeReader({ tryHarder: true, formats: [ZXing.BarcodeFormat.QR_CODE] });
-                scanControls = await codeReader.decodeFromVideoDevice(deviceId || undefined, document.getElementById('video'), (result) => {
-                    if (result) handleScanResult(result.getText());
+                
+                codeReader = new ZXing.BrowserQRCodeReader({ 
+                    tryHarder: true, 
+                    formats: [ZXing.BarcodeFormat.QR_CODE] 
                 });
+                
+                scanControls = await codeReader.decodeFromVideoDevice(
+                    deviceId || undefined,
+                    document.getElementById('video'),
+                    (result) => {
+                        if (result) handleScanResult(result.getText());
+                    }
+                );
+                
                 isScanning = true;
                 document.getElementById('scan-section-wrapper').classList.add('active');
                 document.getElementById('scan-btn-text').textContent = '⏹️ 停止扫描';
@@ -992,6 +1183,7 @@
                 else if (err.name === 'NotFoundError') errorMsg = '未找到摄像头';
                 else if (err.name === 'NotReadableError') errorMsg = '摄像头被占用';
                 else errorMsg = err.message;
+                
                 showCameraStatus('❌ ' + errorMsg, 'error');
                 showFloatingMessage('⚠️ ' + errorMsg, true);
                 await stopCamera();
@@ -1001,15 +1193,19 @@
         async function stopCamera() {
             isScanning = false;
             lastDecodedText = '';
+            
             if (scanControls?.stop) scanControls.stop();
             if (codeReader?.reset) codeReader.reset();
+            
             const video = document.getElementById('video');
             if (video.srcObject) {
                 video.srcObject.getTracks().forEach(track => track.stop());
                 video.srcObject = null;
             }
+            
             scanControls = null;
             codeReader = null;
+            
             document.getElementById('scan-section-wrapper').classList.remove('active');
             document.getElementById('scan-btn-text').textContent = '🚀 开始扫描';
             document.getElementById('btn-start').disabled = false;
@@ -1019,70 +1215,118 @@
         function handleScanResult(decodedText) {
             const now = Date.now();
             if (now - lastScanTime < 1000 && decodedText === lastDecodedText) return;
+            
             lastScanTime = now;
             lastDecodedText = decodedText;
+            
             const scanWindow = document.getElementById('scan-window');
             scanWindow.classList.add('scan-success');
             setTimeout(() => scanWindow.classList.remove('scan-success'), 300);
+            
             processChunkData(decodedText);
         }
         
+        // ==================== 核心数据处理函数 ====================
         async function processChunkData(data) {
             try {
+                // 数据清洗
                 let trimmed = data.trim();
-                if (!trimmed.startsWith('{') && trimmed.includes('{')) trimmed = trimmed.substring(trimmed.indexOf('{'));
-                if (!trimmed.endsWith('}') && trimmed.includes('}')) trimmed = trimmed.substring(0, trimmed.lastIndexOf('}') + 1);
-                if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) throw new Error('数据格式错误');
+                if (!trimmed.startsWith('{') && trimmed.includes('{')) {
+                    trimmed = trimmed.substring(trimmed.indexOf('{'));
+                }
+                if (!trimmed.endsWith('}') && trimmed.includes('}')) {
+                    trimmed = trimmed.substring(0, trimmed.lastIndexOf('}') + 1);
+                }
+                if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) {
+                    throw new Error('数据格式错误');
+                }
                 
                 let chunk = JSON.parse(trimmed);
                 
+                // 文件名二维码处理
                 if (chunk.t === 'fn') {
-                    if (!chunk.f || !chunk.n || typeof chunk.s !== 'number' || !chunk.h) throw new Error('文件名数据字段错误');
-                    if (calculateCRC32(JSON.stringify({ t: chunk.t, f: chunk.f, n: chunk.n, s: chunk.s, ts: chunk.ts, tc: chunk.tc })) !== chunk.h.toLowerCase()) {
+                    if (!chunk.f || !chunk.n || typeof chunk.s !== 'number' || !chunk.h) {
+                        throw new Error('文件名数据字段错误');
+                    }
+                    
+                    // CRC32校验 - 与发送端一致
+                    const crcData = {
+                        t: chunk.t,
+                        f: chunk.f,
+                        n: chunk.n,
+                        s: chunk.s,
+                        ts: chunk.ts,
+                        tc: chunk.tc
+                    };
+                    
+                    if (calculateCRC32(JSON.stringify(crcData)) !== chunk.h.toLowerCase()) {
                         showFloatingMessage('❌ 文件名校验失败', true);
                         return;
                     }
+                    
                     if (currentFileFingerprint && chunk.f !== currentFileFingerprint) {
                         showFloatingMessage('⚠️ 文件指纹不匹配', true);
                         return;
                     }
-                    fileInfo = { fingerprint: chunk.f, filename: decodeFileName(chunk.n), totalChunks: chunk.tc, size: chunk.s };
+                    
+                    fileInfo = { 
+                        fingerprint: chunk.f, 
+                        filename: decodeFileName(chunk.n), 
+                        totalChunks: chunk.tc, 
+                        size: chunk.s 
+                    };
                     currentFileFingerprint = chunk.f;
                     receivedFileName = fileInfo.filename;
+                    
                     document.getElementById('fingerprint-display').style.display = 'block';
                     document.getElementById('fingerprint-value').textContent = currentFileFingerprint;
+                    
                     await saveProgress();
-                    updateStatus();
+                    updateUI();
                     showFloatingMessage('📄 文件名接收成功');
                     showCameraStatus(`✅ 文件: ${receivedFileName}`, 'success');
                 } else {
-                    if (typeof chunk.i !== 'number' || !chunk.t || !chunk.d || !chunk.f) throw new Error('数据字段错误');
+                    // 数据二维码处理
+                    if (typeof chunk.i !== 'number' || !chunk.t || !chunk.d || !chunk.f || !chunk.h) {
+                        throw new Error('数据二维码字段错误');
+                    }
+                    
                     if (!currentFileFingerprint) {
                         currentFileFingerprint = chunk.f;
                         document.getElementById('fingerprint-display').style.display = 'block';
                         document.getElementById('fingerprint-value').textContent = currentFileFingerprint;
                     } else if (chunk.f !== currentFileFingerprint) {
-                        showFloatingMessage('⚠️ 不属于当前文件', true);
+                        showFloatingMessage('⚠️ 二维码不属于当前文件', true);
                         return;
                     }
+                    
+                    // CRC32校验 - 对数据字段
                     if (calculateCRC32(chunk.d) !== chunk.h.toLowerCase()) {
                         showFloatingMessage(`❌ 分片 ${chunk.i+1} 校验失败`, true);
                         return;
                     }
+                    
                     if (receivedChunks.has(chunk.i)) {
-                        showFloatingMessage(`⚠️ 分片 ${chunk.i+1} 已存在`);
+                        showFloatingMessage(`⚠️ 分片 ${chunk.i+1}/${chunk.t} 已接收过`);
                         return;
                     }
-                    if (!fileInfo) fileInfo = { fingerprint: chunk.f, totalChunks: chunk.t, filename: '未知文件', size: 0 };
+                    
+                    if (!fileInfo) {
+                        fileInfo = { fingerprint: chunk.f, totalChunks: chunk.t, filename: '未知文件', size: 0 };
+                    }
+                    
                     receivedChunks.set(chunk.i, chunk.d);
                     await saveProgress();
-                    updateStatus();
-                    showFloatingMessage(`✅ 分片 ${chunk.i + 1}/${chunk.t}`);
-                    if (receivedChunks.size >= fileInfo.totalChunks && fileInfo.filename !== '未知文件') {
-                        document.getElementById('btn-reassemble').disabled = false;
-                        showFloatingMessage('🎉 接收完成！');
-                        setTimeout(() => stopCamera(), 500);
-                    }
+                    updateUI();
+                    showFloatingMessage(`✅ 数据分片 ${chunk.i + 1}/${chunk.t} 扫描成功`);
+                    showCameraStatus(`✅ 成功接收数据分片 ${chunk.i + 1}/${fileInfo.totalChunks}`, 'success');
+                }
+                
+                // 检查是否完成
+                if (fileInfo && fileInfo.totalChunks > 0 && receivedChunks.size >= fileInfo.totalChunks && fileInfo.filename !== '未知文件') {
+                    document.getElementById('btn-reassemble').disabled = false;
+                    showFloatingMessage('🎉 接收完成！');
+                    setTimeout(() => stopCamera(), 500);
                 }
             } catch (err) {
                 console.error('处理失败:', err);
@@ -1139,7 +1383,11 @@
         async function addToQueue(files) {
             for (const file of files) {
                 const img = new Image();
-                await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = URL.createObjectURL(file); });
+                await new Promise((resolve, reject) => { 
+                    img.onload = resolve; 
+                    img.onerror = reject; 
+                    img.src = URL.createObjectURL(file); 
+                });
                 imageQueue.push({ file, img, status: 'pending', result: null });
             }
             updateQueueUI();
@@ -1187,7 +1435,7 @@
             document.getElementById('current-status').textContent = item.status === 'pending' ? '等待识别' : item.status === 'completed' ? '✓ 已识别' : '✗ 失败';
         }
         
-        // ==================== 修复：识别扫描框内100%完整区域 + 橙色二维码优化 ====================
+        // ==================== 修复：扫描框区域识别 + 橙色二维码优化 ====================
         async function scanCurrent() {
             if (currentImageIndex === -1) return;
             const item = imageQueue[currentImageIndex];
@@ -1200,17 +1448,16 @@
                 const width = canvas.width;
                 const height = canvas.height;
                 
-                // 提取扫描框区域（70%中心区域）的100%完整像素
+                // 提取扫描框区域（70%中心区域）
                 const scanAreaRatio = 1.00;
                 const startX = Math.floor((width * (1 - scanAreaRatio)) / 2);
                 const startY = Math.floor((height * (1 - scanAreaRatio)) / 2);
                 const scanWidth = Math.floor(width * scanAreaRatio);
                 const scanHeight = Math.floor(height * scanAreaRatio);
                 
-                // 获取扫描框区域的完整图像数据（100%内容）
                 const imageData = ctx.getImageData(startX, startY, scanWidth, scanHeight);
                 
-                // 创建临时canvas用于识别
+                // 创建临时canvas
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = scanWidth;
                 tempCanvas.height = scanHeight;
@@ -1219,7 +1466,7 @@
                 
                 let result = null;
                 
-                // 1. 使用ZXing识别原始图像（如果可用）
+                // 1. 使用ZXing识别
                 if (typeof ZXing !== 'undefined') {
                     try {
                         const reader = new ZXing.BrowserQRCodeReader();
@@ -1228,22 +1475,20 @@
                     } catch (e) { /* 失败继续 */ }
                 }
                 
-                // 2. 使用jsQR识别原始扫描框区域
+                // 2. 使用jsQR识别
                 if (!result) {
                     const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
                     if (code) result = code.data;
                 }
                 
-                // 3. 针对橙色二维码优化：使用低阈值二值化（阈值200）
-                // 橙色(255,165,0)的灰度约173，标准阈值128会将其视为白色
-                // 使用阈值200可将橙色正确识别为黑色（暗部）
+                // 3. 橙色二维码优化：使用高阈值二值化
                 if (!result) {
                     const orangeOptimizedData = preprocessImageDataWithThreshold(imageData, 200);
                     const code = jsQR(orangeOptimizedData.data, orangeOptimizedData.width, orangeOptimizedData.height, { inversionAttempts: "attemptBoth" });
                     if (code) result = code.data;
                 }
                 
-                // 4. 针对极难识别的二维码：尝试反转颜色模式
+                // 4. 尝试反转颜色
                 if (!result) {
                     const invertedData = invertImageData(imageData);
                     const code = jsQR(invertedData.data, invertedData.width, invertedData.height, { inversionAttempts: "attemptBoth" });
@@ -1253,7 +1498,9 @@
                 if (result) {
                     processChunkData(result);
                     item.status = 'completed';
-                    setTimeout(() => { if (currentImageIndex < imageQueue.length - 1) selectImage(currentImageIndex + 1); }, 500);
+                    setTimeout(() => { 
+                        if (currentImageIndex < imageQueue.length - 1) selectImage(currentImageIndex + 1); 
+                    }, 500);
                 } else {
                     item.status = 'error';
                     showToast('未在扫描框区域内识别到二维码');
@@ -1270,34 +1517,33 @@
             displayImage(item);
         }
         
-        // 使用指定阈值进行二值化（专门用于识别橙色二维码）
+        // 使用指定阈值进行二值化
         function preprocessImageDataWithThreshold(imageData, threshold) {
             const data = new Uint8ClampedArray(imageData.data);
             const len = data.length;
             for (let i = 0; i < len; i += 4) {
-                // 计算灰度值
                 const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-                // 使用指定阈值二值化（橙色173在阈值200下会被视为黑色0）
                 const val = gray > threshold ? 255 : 0;
                 data[i] = data[i + 1] = data[i + 2] = val;
             }
             return new ImageData(data, imageData.width, imageData.height);
         }
         
-        // 颜色反转（用于处理反色二维码）
+        // 颜色反转
         function invertImageData(imageData) {
             const data = new Uint8ClampedArray(imageData.data);
             const len = data.length;
             for (let i = 0; i < len; i += 4) {
-                data[i] = 255 - data[i];         // R
-                data[i + 1] = 255 - data[i + 1]; // G
-                data[i + 2] = 255 - data[i + 2]; // B
-                // Alpha不变
+                data[i] = 255 - data[i];
+                data[i + 1] = 255 - data[i + 1];
+                data[i + 2] = 255 - data[i + 2];
             }
             return new ImageData(data, imageData.width, imageData.height);
         }
         
-        function nextImage() { if (currentImageIndex < imageQueue.length - 1) selectImage(currentImageIndex + 1); }
+        function nextImage() { 
+            if (currentImageIndex < imageQueue.length - 1) selectImage(currentImageIndex + 1); 
+        }
         
         function processQueue() {
             const pending = imageQueue.map((item, idx) => ({ item, idx })).filter(({ item }) => item.status === 'pending');
@@ -1323,29 +1569,38 @@
         }
         
         // ==================== Storage & File ====================
-        function updateStatus() {
+        function updateUI() {
             if (!fileInfo) return;
             const totalReceived = receivedChunks.size;
             const totalToReceive = fileInfo.totalChunks;
             const pct = totalToReceive > 0 ? Math.round((totalReceived / totalToReceive) * 100) : 0;
+            
             document.getElementById('progress-fill').style.width = pct + '%';
             document.getElementById('progress-text').textContent = pct + '%';
             document.getElementById('status-text').textContent = `${receivedFileName || '未命名'}: ${totalReceived}/${totalToReceive}`;
             
-            const grid = document.getElementById('chunks-grid');
-            grid.innerHTML = '';
+            updateChunksDisplay();
+            
+            if (receivedChunks.size >= fileInfo.totalChunks && fileInfo.filename !== '未知文件') {
+                document.getElementById('btn-reassemble').disabled = false;
+            }
+        }
+        
+        function updateChunksDisplay() {
+            if (!fileInfo) {
+                document.getElementById('chunks-grid').innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 10px; width: 100%;">暂无分片数据</div>';
+                return;
+            }
+            
+            let html = '';
             for (let i = 0; i < fileInfo.totalChunks; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'chunk-cell' + (receivedChunks.has(i) ? ' filled' : '');
-                cell.textContent = i + 1;
-                grid.appendChild(cell);
+                const isReceived = receivedChunks.has(i);
+                html += `<div class="chunk-cell ${isReceived ? 'filled' : ''}" title="数据分片 ${i + 1}${isReceived ? ' (已接收)' : ' (未接收)'}">${i + 1}</div>`;
             }
             if (fileInfo?.filename !== '未知文件') {
-                const cell = document.createElement('div');
-                cell.className = 'chunk-cell filename';
-                cell.textContent = '📄';
-                grid.appendChild(cell);
+                html += `<div class="chunk-cell filename" title="文件名分片 (已接收)">📄</div>`;
             }
+            document.getElementById('chunks-grid').innerHTML = html;
         }
         
         async function saveProgress() {
@@ -1355,7 +1610,9 @@
                 await store.setItem('fileInfo', fileInfo);
                 await store.setItem('fingerprint', currentFileFingerprint);
                 await store.setItem('filename', receivedFileName);
-            } catch (err) { console.error('保存失败:', err); }
+            } catch (err) { 
+                console.error('保存失败:', err); 
+            }
         }
         
         async function loadProgress() {
@@ -1365,39 +1622,61 @@
                 const info = await store.getItem('fileInfo');
                 const fp = await store.getItem('fingerprint');
                 const fn = await store.getItem('filename');
+                
                 if (info) {
                     fileInfo = info;
                     receivedChunks = new Map(chunks || []);
                     currentFileFingerprint = fp || info.fingerprint;
                     receivedFileName = fn || info.filename;
+                    
                     document.getElementById('fingerprint-display').style.display = 'block';
                     document.getElementById('fingerprint-value').textContent = currentFileFingerprint;
-                    updateStatus();
-                    if (receivedChunks.size >= fileInfo.totalChunks) document.getElementById('btn-reassemble').disabled = false;
+                    
+                    updateUI();
+                    
+                    if (receivedChunks.size >= fileInfo.totalChunks && fileInfo.filename !== '未知文件') {
+                        document.getElementById('btn-reassemble').disabled = false;
+                    }
+                    
+                    showToast('✅ 数据已恢复');
+                } else {
+                    showToast('没有保存的数据');
                 }
-            } catch (err) { console.error('加载失败:', err); }
+            } catch (err) { 
+                console.error('加载失败:', err); 
+            }
         }
         
         async function reassembleFile() {
             if (!fileInfo || receivedChunks.size < fileInfo.totalChunks) return;
+            
             try {
                 document.getElementById('btn-reassemble').disabled = true;
                 document.getElementById('btn-reassemble').textContent = '⏳ 重组中...';
+                
                 const sorted = [];
                 for (let i = 0; i < fileInfo.totalChunks; i++) {
                     const data = receivedChunks.get(i);
                     if (!data) throw new Error(`缺少分片 ${i + 1}`);
                     sorted.push(data);
                 }
+                
                 const combinedBase64 = sorted.join('');
                 let binary = atob(combinedBase64);
                 const bytes = new Uint8Array(binary.length);
                 for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                
                 let decompressed;
-                try { decompressed = pako.inflate(bytes); } catch (e) { decompressed = bytes; }
+                try { 
+                    decompressed = pako.inflate(bytes); 
+                } catch (e) { 
+                    decompressed = bytes; 
+                }
+                
                 const blob = new Blob([decompressed]);
                 const store = localforage.createInstance({ name: 'qrcode-receiver-v2' });
                 await store.setItem('fileBlob', blob);
+                
                 document.getElementById('btn-download').disabled = false;
                 showToast('✓ 重组完成');
             } catch (err) {
@@ -1412,7 +1691,11 @@
             try {
                 const store = localforage.createInstance({ name: 'qrcode-receiver-v2' });
                 const blob = await store.getItem('fileBlob');
-                if (!blob || !fileInfo) { showToast('没有可下载的文件'); return; }
+                if (!blob || !fileInfo) { 
+                    showToast('没有可下载的文件'); 
+                    return; 
+                }
+                
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -1420,7 +1703,9 @@
                 a.click();
                 URL.revokeObjectURL(url);
                 showToast('⬇️ 下载已开始');
-            } catch (err) { showToast('下载失败: ' + err.message); }
+            } catch (err) { 
+                showToast('下载失败: ' + err.message); 
+            }
         }
         
         function showToast(msg) {
@@ -1430,7 +1715,9 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
         
-        window.addEventListener('beforeunload', () => { if (isScanning) stopCamera(); });
+        window.addEventListener('beforeunload', () => { 
+            if (isScanning) stopCamera(); 
+        });
     </script>
 </body>
 </html>
