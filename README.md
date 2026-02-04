@@ -1,4 +1,4 @@
-# QRSyncOffline
+# QRSync
 <p align="center">
   <a href="README.md">简体中文</a> • <a href="README_EN.md">English</a>
 </p>
@@ -9,11 +9,11 @@
   <img src="https://img.shields.io/badge/Chinese-Supported-orange" alt="中文支持">
   <img src="https://img.shields.io/badge/English-Supported-blueviolet" alt="英文支持">
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
-  <img src="https://img.shields.io/github/stars/huiihao/QRSyncOffline?style=social" alt="GitHub Stars">
+  <img src="https://img.shields.io/github/stars/huiihao/QRSync?style=social" alt="GitHub Stars">
 </p>
 
 <p align="center">
-  <b>QRSyncOffline</b> 是一个纯浏览器实现、完全离线的孤岛文件传输工具，通过二维码序列在没有网络连接/禁止USB设备/禁止剪贴板/只提供视觉界面的孤岛环境下传输文件。
+  <b>QRSync</b> 是一个纯浏览器实现、完全离线的孤岛文件传输工具，通过二维码序列在没有网络连接/禁止USB设备/禁止剪贴板/只提供视觉界面的孤岛环境下传输文件。
 </p>
 
 <p align="center">
@@ -28,7 +28,7 @@
 
 ## 🌐 在线体验
 
-**👉 [点击访问 QRSyncOffline](https://huiihao.github.io/QRSyncOffline/)**
+**👉 [点击访问 QRSync](https://huiihao.github.io/QRSync/)**
 
 > 下载本仓库压缩包，页面加载JavaScript完成后，即可断开网络离线使用。
 
@@ -57,7 +57,7 @@
 
 ### 发送文件
 
-1. 打开 **[发送端](https://huiihao.github.io/QRSyncOffline/send/index.html)**
+1. 打开 **[发送端](https://huiihao.github.io/QRSync/send/index.html)**
 2. 点击或拖拽选择要传输的文件
 3. 调整分片大小和二维码尺寸（可选）
 4. 点击"生成二维码"按钮
@@ -71,7 +71,7 @@
 
 ### 接收文件
 
-1. 打开 **[接收端](https://huiihao.github.io/QRSyncOffline/receiver/index.html)**
+1. 打开 **[接收端](https://huiihao.github.io/QRSync/receiver/index.html)**
 2. 点击"开始扫描"按钮，允许摄像头权限
 3. 按顺序扫描所有数据二维码
 4. 最后扫描文件名二维码（橙色边框）
@@ -150,10 +150,10 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/QRSyncOffline.git
+git clone https://github.com/yourusername/QRSync.git
 
 # 进入项目目录
-cd QRSyncOffline
+cd QRSync
 
 # 启动本地服务器（Python 3）
 python -m http.server 8080
@@ -169,7 +169,7 @@ npx serve .
 ## 📦 项目结构
 
 ```
-QRSyncOffline-Fixed/
+QRSync-Fixed/
 ├── index.html          # 入口页面
 ├── send/
 │   └── index.html      # 发送端
@@ -263,5 +263,5 @@ QRSyncOffline-Fixed/
 ---
 
 <p align="center">
-  Made with ❤️ by QRSyncOffline Team
+  Made with ❤️ by QRSync Team
 </p>
