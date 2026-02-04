@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <b>QRSyncOffline</b> 是一个纯浏览器实现、完全离线的文件传输工具，通过二维码序列在没有网络连接/禁止USB设备/禁止剪贴板/只提供视觉界面的孤岛环境下传输文件。
+  <b>QRSyncOffline</b> 是一个纯浏览器实现、完全离线的孤岛文件传输工具，通过二维码序列在没有网络连接/禁止USB设备/禁止剪贴板/只提供视觉界面的孤岛环境下传输文件。
 </p>
 
 <p align="center">
@@ -118,11 +118,12 @@
 ```json
 {
   "t": "fn",        // 类型标识
-  "f": "ABC12",     // 文件指纹
-  "n": "base64...", // 文件名（Base64 编码）
+  "f": "XYZ89",     // 文件指纹
+  "n": "base64...", // 编码后的文件名
   "s": 1024,        // 文件大小
-  "tc": 5,          // 数据分片总数
-  "h": "c7d2e"      // CRC32 校验码
+  "ts": 1234567890, // 时间戳
+  "tc": 10,         // 总分片数
+  "h": "abc12"      // CRC32校验码
 }
 ```
 
@@ -165,19 +166,35 @@ npx serve .
 
 ---
 
-## 📂 项目结构
+## 📦 项目结构
 
 ```
-QRSyncOffline/
-├── index.html           # 首页入口
+QRSyncOffline-Fixed/
+├── index.html          # 入口页面
 ├── send/
-│   └── index.html       # 发送端
+│   └── index.html      # 发送端
 ├── receiver/
-│   └── index.html       # 接收端
-└── README.md            # 项目说明
+│   └── index.html      # 接收端
+├── js/
+│   ├── qrcode.min.js   # 二维码生成库
+│   ├── pako.min.js     # 压缩库
+│   ├── jszip.min.js    # ZIP打包库
+│   ├── FileSaver.min.js # 文件保存库
+│   ├── zxing-library.min.js # 二维码扫描库
+│   ├── jsQR.js         # 二维码识别库
+│   └── localforage.min.js # 本地存储库
+├── README.md           # 中文文档
+├── README_EN.md        # 英文文档
+└── docs/
+    └── PACKAGING.md    # 打包说明
 ```
-
 > 本项目为纯前端实现，无后端依赖，所有第三方库均本地准备。
+
+---
+
+## 🛠️ 打包为可执行文件
+
+请参考 [docs/PACKAGING.md](docs/PACKAGING.md) 了解如何将本项目打包为独立的可执行文件（Windows/Linux/macOS）。
 
 ---
 
@@ -200,10 +217,11 @@ QRSyncOffline/
 ## 📝 注意事项
 
 1. **扫描顺序**: 请按顺序扫描所有数据分片，最后扫描文件名二维码
-2. **文件大小**: 建议传输文件大小不超过 10MB，过大文件会生成大量二维码
-3. **屏幕亮度**: 确保发送端屏幕亮度足够，以提高扫描成功率
-4. **摄像头对焦**: 保持手机摄像头与屏幕适当距离，确保二维码清晰
-5. **校验失败**: 如遇到校验失败，请重新扫描该二维码
+2. **分片大小**：建议保持默认600字节，过大的分片可能导致二维码无法识别
+3. **文件大小**: 建议传输文件大小不超过 10MB，过大文件会生成大量二维码
+4. **屏幕亮度**: 确保发送端屏幕亮度足够，以提高扫描成功率
+5. **摄像头对焦**: 保持手机摄像头与屏幕适当距离，确保二维码清晰
+6. **校验失败**: 如遇到校验失败，请重新扫描该二维码
 
 ---
 
@@ -211,7 +229,8 @@ QRSyncOffline/
 
 - 所有数据仅在浏览器本地处理，不会上传到任何服务器
 - 接收进度使用浏览器的 IndexedDB 存储，不会泄露隐私
-- 页面加载后即可断开网络使用，确保数据安全
+- 使用 CRC32 校验确保数据完整性
+- 文件指纹机制防止不同文件混淆
 
 ---
 
@@ -235,6 +254,7 @@ QRSyncOffline/
 
 ## 🙏 致谢
 
+- 参考项目 [QRBridge](https://github.com/wallechfox/QRBridge) by [@wallechfox](https://github.com/wallechfox)
 - [pako](https://github.com/nodeca/pako) - 快速 zlib 压缩库
 - [qrcode.js](https://github.com/davidshimjs/qrcodejs) - 二维码生成库
 - [ZXing](https://github.com/zxing-js/library) - 二维码扫描库
