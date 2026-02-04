@@ -34,7 +34,8 @@
 > 下载本仓库压缩包，页面加载JavaScript完成后，即可断开网络离线使用。
 
 <div align="center">
-<img width="80%" alt="image" src="https://github.com/user-attachments/assets/af93481a-316c-4246-9631-1dfd7c282899" />
+<!-- <img width="80%" alt="image" src="https://github.com/user-attachments/assets/af93481a-316c-4246-9631-1dfd7c282899" /> -->
+  <img width="80%" alt="image" src="https://github.com/user-attachments/assets/fa9f4abb-217a-4cd9-8991-4e1be9d85cf4" />
 </div>
 
 
@@ -66,7 +67,8 @@
 **📤发送端界面：**
 
 <div align="center">
-<img width="70%" alt="image" src="https://github.com/user-attachments/assets/b2fe4202-e958-41d4-9720-6c30c2fd4970" />
+<!-- <img width="70%" alt="image" src="https://github.com/user-attachments/assets/b2fe4202-e958-41d4-9720-6c30c2fd4970" /> -->
+  <img width="70%" height="1040" alt="image" src="https://github.com/user-attachments/assets/9d414f06-e5d2-4359-9581-79d0a37b3801" />
 </div>
 
 ### 接收文件
@@ -81,8 +83,10 @@
 **📥接收端界面：**
 
 <div style="display: flex; justify-content: space-between; gap: 20px;">
-  <img style="width: 48%; height: auto;" alt="Sender Interface" src="https://github.com/user-attachments/assets/903f79b1-7804-42f5-b15f-6dfc86b2fe1f" />
-  <img style="width: 48%; height: auto;" alt="Receiver Interface" src="https://github.com/user-attachments/assets/5775618f-2c48-40c5-b99f-459b864a0c06" />
+  <!-- <img style="width: 48%; height: auto;" alt="Sender Interface" src="https://github.com/user-attachments/assets/903f79b1-7804-42f5-b15f-6dfc86b2fe1f" />
+  <img style="width: 48%; height: auto;" alt="Receiver Interface" src="https://github.com/user-attachments/assets/5775618f-2c48-40c5-b99f-459b864a0c06" /> -->
+  <img style="width: 48%; height: auto;" alt="Receiver Interface1" src="https://github.com/user-attachments/assets/5fde12d8-f772-496b-a50d-452062d8f0cc" />
+  <img style="width: 48%; height: auto;" alt="Receiver Interface2" src="https://github.com/user-attachments/assets/616a5e40-ba18-45c4-9207-7e7c00244b6c" />
 </div>
 
 
