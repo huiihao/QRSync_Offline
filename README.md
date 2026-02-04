@@ -1,4 +1,6 @@
-# QRSync
+<p align="center">
+  <img width="20%" height="20%" alt="QRSync_icon" src="https://github.com/user-attachments/assets/96008e19-31d0-4968-a644-dfdfec30fd53" />
+</p>
 <p align="center">
   <a href="README.md">简体中文</a> • <a href="README_EN.md">English</a>
 </p>
@@ -24,7 +26,6 @@
   <a href="#-本地使用">本地使用</a>
 </p>
 
----
 
 ## 🌐 在线体验
 
@@ -36,7 +37,7 @@
 <img width="80%" alt="image" src="https://github.com/user-attachments/assets/af93481a-316c-4246-9631-1dfd7c282899" />
 </div>
 
----
+
 
 ## ✨ 功能特点
 
@@ -51,7 +52,6 @@
 | 📱 **移动端适配** | 针对手机扫描场景优化 |
 | 🎨 **精美界面** | 简约风格设计，简洁优雅 |
 
----
 
 ## 📖 使用方法
 
@@ -85,7 +85,7 @@
   <img style="width: 48%; height: auto;" alt="Receiver Interface" src="https://github.com/user-attachments/assets/5775618f-2c48-40c5-b99f-459b864a0c06" />
 </div>
 
----
+
 
 ## 🔧 技术原理
 
@@ -135,7 +135,6 @@
 - **本地存储**: [localForage](https://github.com/localForage/localForage)
 - **校验算法**: CRC32
 
----
 
 ## 💻 本地使用
 
@@ -164,7 +163,7 @@ npx serve .
 # 浏览器访问 http://localhost:8080
 ```
 
----
+
 
 ## 📦 项目结构
 
@@ -190,13 +189,13 @@ QRSync-Fixed/
 ```
 > 本项目为纯前端实现，无后端依赖，所有第三方库均本地准备。
 
----
+
 
 ## 🛠️ 打包为可执行文件
 
 请参考 [docs/PACKAGING.md](docs/PACKAGING.md) 了解如何将本项目打包为独立的可执行文件（Windows/Linux/macOS）。
 
----
+
 
 ## ⚙️ 配置说明
 
@@ -212,7 +211,7 @@ QRSync-Fixed/
 - **默认值**: 400 像素
 - **建议**: 根据屏幕尺寸和扫描距离调整
 
----
+
 
 ## 📝 注意事项
 
@@ -223,7 +222,7 @@ QRSync-Fixed/
 5. **摄像头对焦**: 保持手机摄像头与屏幕适当距离，确保二维码清晰
 6. **校验失败**: 如遇到校验失败，请重新扫描该二维码
 
----
+
 
 ## 🔒 隐私说明
 
@@ -232,7 +231,7 @@ QRSync-Fixed/
 - 使用 CRC32 校验确保数据完整性
 - 文件指纹机制防止不同文件混淆
 
----
+
 
 ## 🤝 贡献
 
@@ -244,13 +243,13 @@ QRSync-Fixed/
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 打开一个 Pull Request
 
----
+
 
 ## 📄 许可证
 
 本项目基于 [MIT](LICENSE) 许可证开源。
 
----
+
 
 ## 🙏 致谢
 
