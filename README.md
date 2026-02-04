@@ -35,7 +35,7 @@
 
 <div align="center">
 <!-- <img width="80%" alt="image" src="https://github.com/user-attachments/assets/af93481a-316c-4246-9631-1dfd7c282899" /> -->
-  <img width="80%" alt="image" src="https://github.com/user-attachments/assets/fa9f4abb-217a-4cd9-8991-4e1be9d85cf4" />
+  <img width="80%" alt="image" src="https://github.com/user-attachments/assets/90debdb9-1205-4e0b-9ab4-df1aad5f5357" />
 </div>
 
 
