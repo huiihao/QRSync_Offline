@@ -1,4 +1,6 @@
-# QRSync
+<p align="center">
+  <img width="20%" height="20%" alt="QRSync_icon" src="https://github.com/user-attachments/assets/96008e19-31d0-4968-a644-dfdfec30fd53" />
+</p>
 <p align="center">
   <a href="README.md">简体中文</a> • <a href="README_EN.md">English</a>
 </p>
